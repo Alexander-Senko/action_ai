@@ -1,6 +1,6 @@
 require 'abstract_unit'
 
-class TMailMailTest < Test::Unit::TestCase
+class MailTest < Test::Unit::TestCase
   def test_body
     m = Mail.new
     expected = 'something_with_underscores'
@@ -8,8 +8,8 @@ class TMailMailTest < Test::Unit::TestCase
     quoted_body = [expected].pack('*M')
     m.body = quoted_body
     assert_equal "something_with_underscores=\r\n", m.body.encoded
-    # CHANGED: body returns object, not string, Changed m.body to m.body.decoded
-    assert_equal expected, m.body.decoded
+    # CHANGED: body returns object, not string, Changed m.body to m.body.to_s
+    assert_equal expected, m.body.to_s
   end
 
   def test_nested_attachments_are_recognized_correctly
