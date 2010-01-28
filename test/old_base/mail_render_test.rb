@@ -1,60 +1,43 @@
 require 'abstract_unit'
 
 class RenderMailer < ActionMailer::Base
-  def inline_template(recipient)
-    recipients recipient
+  def inline_template
+    recipients 'test@localhost'
     subject    "using helpers"
     from       "tester@example.com"
 
     @world = "Earth"
-    render :inline => "Hello, <%= @world %>"
+    body       render(:inline => "Hello, <%= @world %>")
   end
 
-  def file_template(recipient)
-    recipients recipient
+  def file_template
+    recipients 'test@localhost'
     subject    "using helpers"
     from       "tester@example.com"
 
-    @recipient = recipient
-    render :file => "templates/signed_up"
+    @recipient = 'test@localhost'
+    body       render(:file => "templates/signed_up")
   end
 
-  def implicit_body(recipient)
-    recipients recipient
-    subject    "using helpers"
-    from       "tester@example.com"
-
-    @recipient = recipient
-    render :template => "templates/signed_up"
-  end
-
-  def rxml_template(recipient)
-    recipients recipient
+  def rxml_template
+    recipients 'test@localhost'
     subject    "rendering rxml template"
     from       "tester@example.com"
   end
 
-  def included_subtemplate(recipient)
-    recipients recipient
+  def included_subtemplate
+    recipients 'test@localhost'
     subject    "Including another template in the one being rendered"
     from       "tester@example.com"
   end
 
-  def mailer_accessor(recipient)
-    recipients recipient
-    subject    "Mailer Accessor"
-    from       "tester@example.com"
-
-    render :inline => "Look, <%= mailer.subject %>!"
-  end
-
-  def no_instance_variable(recipient)
-    recipients recipient
+  def no_instance_variable
+    recipients 'test@localhost'
     subject    "No Instance Variable"
     from       "tester@example.com"
 
     silence_warnings do
-      render :inline => "Look, subject.nil? is <%= @subject.nil? %>!"
+      body render(:inline => "Look, subject.nil? is <%= @subject.nil? %>!")
     end
   end
 
@@ -62,19 +45,46 @@ class RenderMailer < ActionMailer::Base
     super
     mailer_name "test_mailer"
   end
+
+  def multipart_alternative
+    recipients 'test@localhost'
+    subject    'multipart/alternative'
+    from       'tester@example.com'
+
+    build_multipart_message(:foo => "bar")
+  end
+
+  private
+    def build_multipart_message(assigns = {})
+      content_type "multipart/alternative"
+
+      part "text/plain" do |p|
+        p.body = build_body_part('plain', assigns, :layout => false)
+      end
+
+      part "text/html" do |p|
+        p.body = build_body_part('html', assigns)
+      end
+    end
+
+    def build_body_part(content_type, assigns, options = {})
+      ActiveSupport::Deprecation.silence do
+        render "#{template}.#{content_type}", :body => assigns
+      end
+    end
 end
 
 class FirstMailer < ActionMailer::Base
-  def share(recipient)
-    recipients recipient
+  def share
+    recipients 'test@localhost'
     subject    "using helpers"
     from       "tester@example.com"
   end
 end
 
 class SecondMailer < ActionMailer::Base
-  def share(recipient)
-    recipients recipient
+  def share
+    recipients 'test@localhost'
     subject    "using helpers"
     from       "tester@example.com"
   end
@@ -86,7 +96,7 @@ class RenderHelperTest < Test::Unit::TestCase
   def setup
     set_delivery_method :test
     ActionMailer::Base.perform_deliveries = true
-    ActionMailer::Base.deliveries = []
+    ActionMailer::Base.deliveries.clear
 
     @recipient = 'test@localhost'
   end
@@ -95,39 +105,39 @@ class RenderHelperTest < Test::Unit::TestCase
     restore_delivery_method
   end
 
-  def test_implicit_body
-    mail = RenderMailer.create_implicit_body(@recipient)
-    assert_equal "Hello there, \n\nMr. test@localhost", mail.body.to_s.strip
-  end
-
   def test_inline_template
-    mail = RenderMailer.create_inline_template(@recipient)
+    mail = RenderMailer.inline_template
     assert_equal "Hello, Earth", mail.body.to_s.strip
   end
 
   def test_file_template
-    mail = RenderMailer.create_file_template(@recipient)
+    mail = RenderMailer.file_template
     assert_equal "Hello there, \n\nMr. test@localhost", mail.body.to_s.strip
   end
 
   def test_rxml_template
-    mail = RenderMailer.deliver_rxml_template(@recipient)
+    mail = RenderMailer.rxml_template.deliver
     assert_equal "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<test/>", mail.body.to_s.strip
   end
 
   def test_included_subtemplate
-    mail = RenderMailer.deliver_included_subtemplate(@recipient)
+    mail = RenderMailer.included_subtemplate.deliver
     assert_equal "Hey Ho, let's go!", mail.body.to_s.strip
   end
 
-  def test_mailer_accessor
-    mail = RenderMailer.deliver_mailer_accessor(@recipient)
-    assert_equal "Look, Mailer Accessor!", mail.body.to_s.strip
+  def test_no_instance_variable
+    mail = RenderMailer.no_instance_variable.deliver
+    assert_equal "Look, subject.nil? is true!", mail.body.to_s.strip
   end
 
-  def test_no_instance_variable
-    mail = RenderMailer.deliver_no_instance_variable(@recipient)
-    assert_equal "Look, subject.nil? is true!", mail.body.to_s.strip
+  def test_legacy_multipart_alternative
+    mail = RenderMailer.multipart_alternative.deliver
+    assert_equal(2, mail.parts.size)
+    assert_equal("multipart/alternative", mail.mime_type)
+    assert_equal("text/plain", mail.parts[0].mime_type)
+    assert_equal("foo: bar", mail.parts[0].body.encoded)
+    assert_equal("text/html", mail.parts[1].mime_type)
+    assert_equal("<strong>foo</strong> bar", mail.parts[1].body.encoded)
   end
 end
 
@@ -135,7 +145,7 @@ class FirstSecondHelperTest < Test::Unit::TestCase
   def setup
     set_delivery_method :test
     ActionMailer::Base.perform_deliveries = true
-    ActionMailer::Base.deliveries = []
+    ActionMailer::Base.deliveries.clear
 
     @recipient = 'test@localhost'
   end
@@ -145,13 +155,13 @@ class FirstSecondHelperTest < Test::Unit::TestCase
   end
 
   def test_ordering
-    mail = FirstMailer.create_share(@recipient)
+    mail = FirstMailer.share
     assert_equal "first mail", mail.body.to_s.strip
-    mail = SecondMailer.create_share(@recipient)
+    mail = SecondMailer.share
     assert_equal "second mail", mail.body.to_s.strip
-    mail = FirstMailer.create_share(@recipient)
+    mail = FirstMailer.share
     assert_equal "first mail", mail.body.to_s.strip
-    mail = SecondMailer.create_share(@recipient)
+    mail = SecondMailer.share
     assert_equal "second mail", mail.body.to_s.strip
   end
 end
