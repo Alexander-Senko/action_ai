@@ -10,6 +10,8 @@ require 'mailers/proc_mailer'
 require 'mailers/asset_mailer'
 
 class BaseTest < ActiveSupport::TestCase
+  include Rails::Dom::Testing::Assertions
+
   setup do
     @original_delivery_method = ActionMailer::Base.delivery_method
     ActionMailer::Base.delivery_method = :test
@@ -257,6 +259,20 @@ class BaseTest < ActiveSupport::TestCase
 
     e = assert_raises(RuntimeError) { LateInlineAttachmentMailer.welcome.message }
     assert_match(/Can't add attachments after `mail` was called./, e.message)
+  end
+
+  test "adding inline attachments while rendering mail works" do
+    class LateInlineAttachmentMailer < ActionMailer::Base
+      def on_render
+        mail from: "welcome@example.com", to: "to@example.com"
+      end
+    end
+
+    mail = LateInlineAttachmentMailer.on_render
+    assert_nothing_raised { mail.message }
+
+    assert_equal ["image/jpeg; filename=controller_attachments.jpg",
+                  "image/jpeg; filename=attachments.jpg"], mail.attachments.inline.map {|a| a['Content-Type'].to_s }
   end
 
   test "accessing attachments works after mail was called" do
@@ -522,7 +538,7 @@ class BaseTest < ActiveSupport::TestCase
 
     mail = AssetMailer.welcome
 
-    assert_equal(%{<img alt="Dummy" src="http://global.com/images/dummy.png" />}, mail.body.to_s.strip)
+    assert_dom_equal(%{<img alt="Dummy" src="http://global.com/images/dummy.png" />}, mail.body.to_s.strip)
   end
 
   test "assets tags should use a Mailer's asset_host settings when available" do
@@ -536,7 +552,7 @@ class BaseTest < ActiveSupport::TestCase
 
     mail = TempAssetMailer.welcome
 
-    assert_equal(%{<img alt="Dummy" src="http://local.com/images/dummy.png" />}, mail.body.to_s.strip)
+    assert_dom_equal(%{<img alt="Dummy" src="http://local.com/images/dummy.png" />}, mail.body.to_s.strip)
   end
 
   test 'the view is not rendered when mail was never called' do
