@@ -1,0 +1,5 @@
+<% module_namespacing do -%>
+class ApplicationAI < ActionAI::Agent
+  layout 'ai'
+end
+<% end %>

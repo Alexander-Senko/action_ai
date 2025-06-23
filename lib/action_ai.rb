@@ -27,7 +27,7 @@ require "abstract_controller"
 require "action_ai/version"
 require "action_ai/deprecator"
 
-# Common Active Support usage in Action Mailer
+# Common Active Support usage in Action AI
 require "active_support"
 require "active_support/rails"
 require "active_support/core_ext/class"
@@ -39,34 +39,27 @@ require "active_support/lazy_load_hooks"
 module ActionAI
   extend ::ActiveSupport::Autoload
 
-  eager_autoload do
-    autoload :Collector
-  end
-
-  autoload :Base
+  autoload :Agent
   autoload :Callbacks
-  autoload :DeliveryMethods
-  autoload :InlinePreviewInterceptor
-  autoload :MailHelper
+  autoload :PromptHelper
   autoload :Parameterized
   autoload :Preview
   autoload :Previews, "action_ai/preview"
   autoload :TestCase
   autoload :TestHelper
-  autoload :MessageDelivery
-  autoload :MailDeliveryJob
-  autoload :QueuedDelivery
-  autoload :FormBuilder
+  autoload :Interaction
+  autoload :ExecutionJob
+  autoload :QueuedExecution
 
   def self.eager_load!
     super
 
-    require "mail"
-    Mail.eager_autoload!
+    require "ruby_llm"
+    RubyLLM.eager_autoload!
 
-    Base.descendants.each do |mailer|
-      mailer.eager_load! unless mailer.abstract?
-    end
+    Agent.descendants
+         .reject(&:abstract?)
+         .each(&:eager_load!)
   end
 end
 

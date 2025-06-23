@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "abstract_unit"
-require "mailers/callback_mailer"
+require "agents/callback_agent"
 require "active_support/testing/stream"
 
 class ActionAICallbacksTest < ActiveSupport::TestCase
@@ -9,78 +9,67 @@ class ActionAICallbacksTest < ActiveSupport::TestCase
   include ActiveSupport::Testing::Stream
 
   setup do
-    @previous_delivery_method = ActionAI::Base.delivery_method
-    ActionAI::Base.delivery_method = :test
-    CallbackMailer.rescue_from_error = nil
-    CallbackMailer.after_deliver_instance = nil
-    CallbackMailer.around_deliver_instance = nil
-    CallbackMailer.abort_before_deliver = nil
-    CallbackMailer.around_handles_error = nil
+    CallbackAgent.rescue_from_error = nil
+    CallbackAgent.after_execution_instance = nil
+    CallbackAgent.around_execution_instance = nil
+    CallbackAgent.abort_before_execution = nil
+    CallbackAgent.around_handles_error = nil
   end
 
   teardown do
-    ActionAI::Base.deliveries.clear
-    ActionAI::Base.delivery_method = @previous_delivery_method
-    CallbackMailer.rescue_from_error = nil
-    CallbackMailer.after_deliver_instance = nil
-    CallbackMailer.around_deliver_instance = nil
-    CallbackMailer.abort_before_deliver = nil
-    CallbackMailer.around_handles_error = nil
+    CallbackAgent.rescue_from_error = nil
+    CallbackAgent.after_execution_instance = nil
+    CallbackAgent.around_execution_instance = nil
+    CallbackAgent.abort_before_execution = nil
+    CallbackAgent.around_handles_error = nil
   end
 
-  test "deliver_now should call after_deliver callback and can access sent message" do
-    mail_delivery = CallbackMailer.test_message
-    mail_delivery.deliver_now
+  test "run should call after_execution callback and can access received message" do
+    prompt = CallbackAgent.test_message
+    prompt.run
 
-    assert_kind_of CallbackMailer, CallbackMailer.after_deliver_instance
-    assert_not_empty CallbackMailer.after_deliver_instance.message.message_id
-    assert_equal mail_delivery.message_id, CallbackMailer.after_deliver_instance.message.message_id
-    assert_equal "test-receiver@test.com", CallbackMailer.after_deliver_instance.message.to.first
+    assert_kind_of CallbackAgent, CallbackAgent.after_execution_instance
+    assert_equal :assistant, CallbackAgent.after_execution_instance.message.role
+    assert_equal "Test prompt", CallbackAgent.after_execution_instance.message.content
   end
 
-  test "deliver_now! should call after_deliver callback" do
-    CallbackMailer.test_message.deliver_now!
+  test "before_execution can abort the interaction and not run after_execution callbacks" do
+    CallbackAgent.abort_before_execution = true
 
-    assert_kind_of CallbackMailer, CallbackMailer.after_deliver_instance
+    prompt = CallbackAgent.test_message
+    prompt.run
+
+    assert_nil prompt.message
+    assert_nil CallbackAgent.after_execution_instance
   end
 
-  test "before_deliver can abort the delivery and not run after_deliver callbacks" do
-    CallbackMailer.abort_before_deliver = true
-
-    mail_delivery = CallbackMailer.test_message
-    mail_delivery.deliver_now
-
-    assert_nil mail_delivery.message_id
-    assert_nil CallbackMailer.after_deliver_instance
-  end
-
-  test "deliver_later should call after_deliver callback and can access sent message" do
+  test "later should call after_execution callback and can access received message" do
     perform_enqueued_jobs do
       silence_stream($stdout) do
-        CallbackMailer.test_message.deliver_later
+        CallbackAgent.test_message.later
       end
     end
-    assert_kind_of CallbackMailer, CallbackMailer.after_deliver_instance
-    assert_not_empty CallbackMailer.after_deliver_instance.message.message_id
+    assert_kind_of CallbackAgent, CallbackAgent.after_execution_instance
+    assert_equal :assistant, CallbackAgent.after_execution_instance.message.role
   end
 
-  test "around_deliver is called after rescue_from on action processing exceptions" do
-    CallbackMailer.around_handles_error = true
+  test "around_execution is called after rescue_from on action processing exceptions" do
+    CallbackAgent.around_handles_error = true
 
-    CallbackMailer.test_raise_action.deliver_now
-    assert CallbackMailer.rescue_from_error
+    CallbackAgent.test_raise_action.run
+    assert CallbackAgent.rescue_from_error
   end
 
-  test "around_deliver is called before rescue_from on deliver! exceptions" do
-    CallbackMailer.around_handles_error = true
+  test "around_execution is called before rescue_from on interaction exceptions" do
+    CallbackAgent.around_handles_error = true
 
-    stub_any_instance(Mail::TestMailer, instance: Mail::TestMailer.new({})) do |instance|
-      instance.stub(:deliver!, proc { raise "boom deliver exception" }) do
-        CallbackMailer.test_message.deliver_now
+    stub_any_instance(CallbackAgent, instance: CallbackAgent.new) do |instance|
+      instance.stub(:message, proc { raise "boom execution exception" }) do
+        CallbackAgent.test_message.run
       end
     end
 
-    assert_kind_of CallbackMailer, CallbackMailer.after_deliver_instance
-    assert_nil CallbackMailer.rescue_from_error
+    assert_kind_of CallbackAgent, CallbackAgent.after_execution_instance
+    assert_nil CallbackAgent.rescue_from_error
   end
 end

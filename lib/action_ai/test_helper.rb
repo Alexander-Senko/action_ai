@@ -2,263 +2,271 @@
 
 require "active_support/core_ext/array/extract_options"
 require "active_job"
+require "ruby_llm/tester"
+
+RubyLLM.configure do
+  it.default_model = "echo"
+end
 
 module ActionAI
-  # Provides helper methods for testing Action Mailer, including #assert_emails
-  # and #assert_no_emails.
+  # Provides a list of prompts that have been executed by RubyLLM::Tester
+  singleton_class.delegate :interactions, to: RubyLLM::Tester
+
+  # Provides helper methods for testing Action AI, including #assert_ai_prompts
+  # and #assert_no_ai_prompts.
   module TestHelper
     include ActiveJob::TestHelper
 
-    # Asserts that the number of emails sent matches the given number.
+    # Asserts that the number of AI prompts executed matches the given number.
     #
-    #   def test_emails
-    #     assert_emails 0
-    #     ContactMailer.welcome.deliver_now
-    #     assert_emails 1
-    #     ContactMailer.welcome.deliver_now
-    #     assert_emails 2
+    #   def test_prompts
+    #     assert_ai_prompts 0
+    #     Generator.code(task).run
+    #     assert_ai_prompts 1
+    #     Generator.code(task).run
+    #     assert_ai_prompts 2
     #   end
     #
     # If a block is passed, that block should cause the specified number of
-    # emails to be sent.
+    # prompts to be executed.
     #
-    #   def test_emails_again
-    #     assert_emails 1 do
-    #       ContactMailer.welcome.deliver_now
+    #   def test_ai_prompts_again
+    #     assert_ai_prompts 1 do
+    #       Generator.code(task).run
     #     end
     #
-    #     assert_emails 2 do
-    #       ContactMailer.welcome.deliver_now
-    #       ContactMailer.welcome.deliver_later
+    #     assert_ai_prompts 2 do
+    #       Generator.code(task).run
+    #       Generator.code(task).later
     #     end
     #   end
-    def assert_emails(number, &block)
+    def assert_ai_prompts(number, &block)
       if block_given?
-        diff = capture_emails(&block).length
-        assert_equal number, diff, "#{number} emails expected, but #{diff} were sent"
+        diff = capture_ai_prompts(&block).length
+        assert_equal number, diff, "#{number} prompts expected, but #{diff} were executed"
       else
-        assert_equal number, ActionAI::Base.deliveries.size
+        assert_equal number, ActionAI.interactions.size
       end
     end
 
-    # Asserts that no emails have been sent.
+    # Asserts that no AI prompts have been executed.
     #
-    #   def test_emails
-    #     assert_no_emails
-    #     ContactMailer.welcome.deliver_now
-    #     assert_emails 1
+    #   def test_prompts
+    #     assert_no_ai_prompts
+    #     Generator.code(task).run
+    #     assert_ai_prompts 1
     #   end
     #
-    # If a block is passed, that block should not cause any emails to be sent.
+    # If a block is passed, that block should not cause any prompts to be executed.
     #
-    #   def test_emails_again
-    #     assert_no_emails do
-    #       # No emails should be sent from this block
+    #   def test_prompts_again
+    #     assert_no_ai_prompts do
+    #       # No prompts should be executed from this block
     #     end
     #   end
     #
     # Note: This assertion is simply a shortcut for:
     #
-    #   assert_emails 0, &block
-    def assert_no_emails(&block)
-      assert_emails 0, &block
+    #   assert_ai_prompts 0, &block
+    def assert_no_ai_prompts(&block)
+      assert_ai_prompts 0, &block
     end
 
-    # Asserts that the number of emails enqueued for later delivery matches
+    # Asserts that the number of AI jobs enqueued for later processing matches
     # the given number.
     #
-    #   def test_emails
-    #     assert_enqueued_emails 0
-    #     ContactMailer.welcome.deliver_later
-    #     assert_enqueued_emails 1
-    #     ContactMailer.welcome.deliver_later
-    #     assert_enqueued_emails 2
+    #   def test_jobs
+    #     assert_enqueued_ai_jobs 0
+    #     Generator.code(task).later
+    #     assert_enqueued_ai_jobs 1
+    #     Generator.code(task).later
+    #     assert_enqueued_ai_jobs 2
     #   end
     #
     # If a block is passed, that block should cause the specified number of
-    # emails to be enqueued.
+    # jobs to be enqueued.
     #
-    #   def test_emails_again
-    #     assert_enqueued_emails 1 do
-    #       ContactMailer.welcome.deliver_later
+    #   def test_jobs_again
+    #     assert_enqueued_ai_jobs 1 do
+    #       Generator.code(task).later
     #     end
     #
-    #     assert_enqueued_emails 2 do
-    #       ContactMailer.welcome.deliver_later
-    #       ContactMailer.welcome.deliver_later
+    #     assert_enqueued_ai_jobs 2 do
+    #       Generator.code(task).later
+    #       Generator.code(task).later
     #     end
     #   end
-    def assert_enqueued_emails(number, &block)
-      assert_enqueued_jobs(number, only: ->(job) { delivery_job_filter(job) }, &block)
+    def assert_enqueued_ai_jobs(number, &block)
+      assert_enqueued_jobs(number, only: ->(job) { ai_job_filter(job) }, &block)
     end
 
-    # Asserts that a specific email has been enqueued, optionally
+    # Asserts that a specific AI job has been enqueued, optionally
     # matching arguments and/or params.
     #
-    #   def test_email
-    #     ContactMailer.welcome.deliver_later
-    #     assert_enqueued_email_with ContactMailer, :welcome
+    #   def test_job
+    #     Generator.code.later
+    #     assert_enqueued_ai_job_with Generator, :code
     #   end
     #
-    #   def test_email_with_parameters
-    #     ContactMailer.with(greeting: "Hello").welcome.deliver_later
-    #     assert_enqueued_email_with ContactMailer, :welcome, args: { greeting: "Hello" }
+    #   def test_job_with_parameters
+    #     Generator.with(context: "MVP").later
+    #     assert_enqueued_ai_job_with Generator, :code, params: { context: "MVP" }
     #   end
     #
-    #   def test_email_with_arguments
-    #     ContactMailer.welcome("Hello", "Goodbye").deliver_later
-    #     assert_enqueued_email_with ContactMailer, :welcome, args: ["Hello", "Goodbye"]
+    #   def test_job_with_arguments
+    #     Generator.code(task).later
+    #     assert_enqueued_ai_job_with Generator, :code, args: [task]
     #   end
     #
-    #   def test_email_with_named_arguments
-    #     ContactMailer.welcome(greeting: "Hello", farewell: "Goodbye").deliver_later
-    #     assert_enqueued_email_with ContactMailer, :welcome, args: [{ greeting: "Hello", farewell: "Goodbye" }]
+    #   def test_job_with_named_arguments
+    #     Generator.code(task:).later
+    #     assert_enqueued_ai_job_with Generator, :code, args: [{task:}]
     #   end
     #
-    #   def test_email_with_parameters_and_arguments
-    #     ContactMailer.with(greeting: "Hello").welcome("Cheers", "Goodbye").deliver_later
-    #     assert_enqueued_email_with ContactMailer, :welcome, params: { greeting: "Hello" }, args: ["Cheers", "Goodbye"]
+    #   def test_job_with_parameters_and_arguments
+    #     Generator.with(context: "MVP").code(task).later
+    #     assert_enqueued_ai_job_with Generator, :code, params: { context: "MVP" }, args: [task]
     #   end
     #
-    #   def test_email_with_parameters_and_named_arguments
-    #     ContactMailer.with(greeting: "Hello").welcome(farewell: "Goodbye").deliver_later
-    #     assert_enqueued_email_with ContactMailer, :welcome, params: { greeting: "Hello" }, args: [{farewell: "Goodbye"}]
+    #   def test_job_with_parameters_and_named_arguments
+    #     Generator.with(context: "MVP").code(task:).later
+    #     assert_enqueued_ai_job_with Generator, :code, params: { context: "MVP" }, args: [{task:}]
     #   end
     #
-    #   def test_email_with_parameterized_mailer
-    #     ContactMailer.with(greeting: "Hello").welcome.deliver_later
-    #     assert_enqueued_email_with ContactMailer.with(greeting: "Hello"), :welcome
+    #   def test_job_with_parameterized_agent
+    #     Generator.with(context: "MVP").code.later
+    #     assert_enqueued_ai_job_with Generator.with(context: "MVP"), :code
     #   end
     #
-    #   def test_email_with_matchers
-    #     ContactMailer.with(greeting: "Hello").welcome("Cheers", "Goodbye").deliver_later
-    #     assert_enqueued_email_with ContactMailer, :welcome,
-    #       params: ->(params) { /hello/i.match?(params[:greeting]) },
-    #       args: ->(args) { /cheers/i.match?(args[0]) }
+    #   def test_job_with_matchers
+    #     Generator.with(context: "MVP").code(task).later
+    #     assert_enqueued_ai_job_with Generator, :code,
+    #       params: ->(params) { /mvp/i.match?(params[:context]) },
+    #       args: ->(args) { task == args[0] }
     #   end
     #
-    # If a block is passed, that block should cause the specified email
+    # If a block is passed, that block should cause the specified job
     # to be enqueued.
     #
-    #   def test_email_in_block
-    #     assert_enqueued_email_with ContactMailer, :welcome do
-    #       ContactMailer.welcome.deliver_later
+    #   def test_job_in_block
+    #     assert_enqueued_ai_job_with Generator, :code do
+    #       Generator.code(task).later
     #     end
     #   end
     #
-    # If +args+ is provided as a Hash, a parameterized email is matched.
+    # If +args+ is provided as a Hash, a parameterized job is matched.
     #
-    #   def test_parameterized_email
-    #     assert_enqueued_email_with ContactMailer, :welcome,
-    #       args: {email: 'user@example.com'} do
-    #       ContactMailer.with(email: 'user@example.com').welcome.deliver_later
+    #   def test_parameterized_job
+    #     assert_enqueued_ai_job_with Generator, :code,
+    #       args: {context: "MVP"} do
+    #       Generator.with(context: "MVP").code.later
     #     end
     #   end
-    def assert_enqueued_email_with(mailer, method, params: nil, args: nil, queue: nil, &block)
-      if mailer.is_a? ActionAI::Parameterized::Mailer
-        params = mailer.instance_variable_get(:@params)
-        mailer = mailer.instance_variable_get(:@mailer)
+    def assert_enqueued_ai_job_with(agent, method, params: nil, args: nil, queue: nil, &block)
+      if agent.is_a? ActionAI::Parameterized::Agent
+        params = agent.instance_variable_get(:@params)
+        agent = agent.instance_variable_get(:@agent)
       end
 
       args = Array(args) unless args.is_a?(Proc)
-      queue ||= mailer.deliver_later_queue_name || ActiveJob::Base.default_queue_name
+      queue ||= agent.execute_later_queue_name || ActiveJob::Base.default_queue_name
 
       expected = ->(job_args) do
         job_kwargs = job_args.extract_options!
 
-        [mailer.to_s, method.to_s, "deliver_now"] == job_args &&
+        [agent.to_s, method.to_s] == job_args &&
           params === job_kwargs[:params] && args === job_kwargs[:args]
       end
 
-      assert_enqueued_with(job: mailer.delivery_job, args: expected, queue: queue.to_s, &block)
+      assert_enqueued_with(job: agent.execution_job, args: expected, queue: queue.to_s, &block)
     end
 
-    # Asserts that no emails are enqueued for later delivery.
+    # Asserts that no AI jobs are enqueued for later processing.
     #
-    #   def test_no_emails
-    #     assert_no_enqueued_emails
-    #     ContactMailer.welcome.deliver_later
-    #     assert_enqueued_emails 1
+    #   def test_no_jobs
+    #     assert_no_enqueued_ai_jobs
+    #     Generator.code(task).later
+    #     assert_enqueued_ai_jobs 1
     #   end
     #
-    # If a block is provided, it should not cause any emails to be enqueued.
+    # If a block is provided, it should not cause any AI jobs to be enqueued.
     #
-    #   def test_no_emails
-    #     assert_no_enqueued_emails do
-    #       # No emails should be enqueued from this block
+    #   def test_no_jobs
+    #     assert_no_enqueued_ai_jobs do
+    #       # No AI jobs should be enqueued from this block
     #     end
     #   end
-    def assert_no_enqueued_emails(&block)
-      assert_enqueued_emails 0, &block
+    def assert_no_enqueued_ai_jobs(&block)
+      assert_enqueued_ai_jobs 0, &block
     end
 
-    # Delivers all enqueued emails. If a block is given, delivers all of the emails
+    # Executes all enqueued AI jobs. If a block is given, executes all of the jobs
     # that were enqueued throughout the duration of the block. If a block is
-    # not given, delivers all the enqueued emails up to this point in the test.
+    # not given, executes all the enqueued jobs up to this point in the test.
     #
-    #   def test_deliver_enqueued_emails
-    #     deliver_enqueued_emails do
-    #       ContactMailer.welcome.deliver_later
+    #   def test_execute_enqueued_jobs
+    #     perform_enqueued_ai_jobs do
+    #       Generator.code(task).later
     #     end
     #
-    #     assert_emails 1
+    #     assert_ai_prompts 1
     #   end
     #
-    #   def test_deliver_enqueued_emails_without_block
-    #     ContactMailer.welcome.deliver_later
+    #   def test_execute_enqueued_jobs_without_block
+    #     Generator.code(task).later
     #
-    #     deliver_enqueued_emails
+    #     perform_enqueued_ai_jobs
     #
-    #     assert_emails 1
+    #     assert_ai_prompts 1
     #   end
     #
     # If the +:queue+ option is specified,
-    # then only the emails(s) enqueued to a specific queue will be performed.
+    # then only the prompts enqueued to a specific queue will be performed.
     #
-    #   def test_deliver_enqueued_emails_with_queue
-    #     deliver_enqueued_emails queue: :external_mailers do
-    #       CustomerMailer.deliver_later_queue_name = :external_mailers
-    #       CustomerMailer.welcome.deliver_later # will be performed
-    #       EmployeeMailer.deliver_later_queue_name = :internal_mailers
-    #       EmployeeMailer.welcome.deliver_later # will not be performed
+    #   def test_execute_enqueued_jobs_with_queue
+    #     perform_enqueued_ai_jobs queue: :external_agents do
+    #       Generator.execution_later_queue_name = :external_agents
+    #       Generator.code(task).later # will be performed
+    #       Notifier.execution_later_queue_name = :internal_agents
+    #       Notifier.welcome.later # will not be performed
     #     end
     #
-    #     assert_emails 1
+    #     assert_ai_prompts 1
     #   end
     #
-    # If the +:at+ option is specified, then only delivers emails enqueued to deliver
+    # If the +:at+ option is specified, then only executes prompts enqueued to execution
     # immediately or before the given time.
-    def deliver_enqueued_emails(queue: nil, at: nil, &block)
-      perform_enqueued_jobs(only: ->(job) { delivery_job_filter(job) }, queue: queue, at: at, &block)
+    def perform_enqueued_ai_jobs(queue: nil, at: nil, &block)
+      perform_enqueued_jobs(only: ->(job) { ai_job_filter(job) }, queue: queue, at: at, &block)
     end
 
-    # Returns any emails that are sent in the block.
+    # Returns any AI prompts that are executed in the block.
     #
-    #   def test_emails
-    #     emails = capture_emails do
-    #       ContactMailer.welcome.deliver_now
+    #   def test_ai_prompts
+    #     prompts = capture_ai_prompts do
+    #       Generator.code(task).content
     #     end
-    #     assert_equal "Hi there", emails.first.subject
+    #     assert_match /Write .*code/, prompts.first.content
     #
-    #     emails = capture_emails do
-    #       ContactMailer.welcome.deliver_now
-    #       ContactMailer.welcome.deliver_later
+    #     prompts = capture_ai_prompts do
+    #       Generator.code(task).content
+    #       Generator.code(task).later
     #     end
-    #     assert_equal "Hi there", emails.first.subject
+    #     assert_match /Write .*code/, prompts.first.content
     #   end
-    def capture_emails(&block)
-      original_count = ActionAI::Base.deliveries.size
-      deliver_enqueued_emails(&block)
-      new_count = ActionAI::Base.deliveries.size
+    def capture_ai_prompts(&block)
+      original_count = ActionAI.interactions.size
+      perform_enqueued_ai_jobs(&block)
+      new_count = ActionAI.interactions.size
       diff = new_count - original_count
-      ActionAI::Base.deliveries.last(diff)
+      ActionAI.interactions.last(diff)
     end
 
     private
-      def delivery_job_filter(job)
+      def ai_job_filter(job)
         job_class = job.is_a?(Hash) ? job.fetch(:job) : job.class
 
-        Base.descendants.map(&:delivery_job).include?(job_class)
+        Agent.descendants.map(&:execution_job).include?(job_class)
       end
   end
 end

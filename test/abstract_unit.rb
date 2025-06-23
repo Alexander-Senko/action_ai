@@ -22,7 +22,7 @@ require "action_ai/test_case"
 
 # Emulate AV railtie
 require "action_view"
-ActionAI::Base.include(ActionView::Layouts)
+ActionAI::Agent.include(ActionView::Layouts)
 
 # Show backtraces for deprecated behavior for quicker cleanup.
 ActionAI.deprecator.debug = true
@@ -31,9 +31,9 @@ ActionAI.deprecator.debug = true
 I18n.enforce_available_locales = false
 
 FIXTURE_LOAD_PATH = File.expand_path("fixtures", __dir__)
-ActionAI::Base.view_paths = FIXTURE_LOAD_PATH
+ActionAI::Agent.view_paths = FIXTURE_LOAD_PATH
 
-ActionAI::Base.delivery_job = ActionAI::MailDeliveryJob
+ActionAI::Agent.execution_job = ActionAI::ExecutionJob
 
 class ActiveSupport::TestCase
   include ActiveSupport::Testing::MethodCallAssertions

@@ -1,0 +1,11 @@
+<% module_namespacing do -%>
+class <%= class_name %> < ApplicationAI
+<% actions.each_with_index do |action, index| -%>
+<% if index != 0 -%>
+
+<% end -%>
+  def <%= action %>
+  end
+<% end -%>
+end
+<% end -%>

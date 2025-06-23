@@ -125,10 +125,6 @@ group :storage do
 	gem "image_processing", "~> 1.2"
 end
 
-# Action Mailbox
-gem "aws-sdk-sns", require: false
-gem "webmock"
-
 # Add your own local bundler stuff.
 local_gemfile = File.expand_path(".Gemfile", __dir__)
 instance_eval File.read local_gemfile if File.exist? local_gemfile

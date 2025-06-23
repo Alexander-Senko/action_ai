@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module ActionAI # :nodoc:
-  # = Action Mailer \Rescuable
+  # = Action AI \Rescuable
   #
   # Provides
   # {rescue_from}[rdoc-ref:ActiveSupport::Rescuable::ClassMethods#rescue_from]
-  # for mailers. Wraps mailer action processing, mail job processing, and mail
-  # delivery to handle configured errors.
+  # for AI agents. Wraps agent action processing and job execution to handle
+  # configured errors.
   module Rescuable
     extend ActiveSupport::Concern
     include ActiveSupport::Rescuable

@@ -1,26 +1,18 @@
 # frozen_string_literal: true
 
 module ActionAI
-  # = Action Mailer \Parameterized
+  # = Action AI \Parameterized
   #
-  # Provides the option to parameterize mailers in order to share instance variable
-  # setup, processing, and common headers.
+  # Provides the option to parameterize AI agents in order to share instance variable
+  # setup, processing, and common defaults.
   #
   # Consider this example that does not use parameterization:
   #
-  #   class InvitationsMailer < ApplicationMailer
+  #   class InvitationAgent < ApplicationAI
   #     def account_invitation(inviter, invitee)
   #       @account = inviter.account
   #       @inviter = inviter
   #       @invitee = invitee
-  #
-  #       subject = "#{@inviter.name} invited you to their Basecamp (#{@account.name})"
-  #
-  #       mail \
-  #         subject:   subject,
-  #         to:        invitee.email_address,
-  #         from:      common_address(inviter),
-  #         reply_to:  inviter.email_address_with_name
   #     end
   #
   #     def project_invitation(project, inviter, invitee)
@@ -29,14 +21,6 @@ module ActionAI
   #       @inviter = inviter
   #       @invitee = invitee
   #       @summarizer = ProjectInvitationSummarizer.new(@project.bucket)
-  #
-  #       subject = "#{@inviter.name.familiar} added you to a project in Basecamp (#{@account.name})"
-  #
-  #       mail \
-  #         subject:   subject,
-  #         to:        invitee.email_address,
-  #         from:      common_address(inviter),
-  #         reply_to:  inviter.email_address_with_name
   #     end
   #
   #     def bulk_project_invitation(projects, inviter, invitee)
@@ -44,48 +28,31 @@ module ActionAI
   #       @projects = projects.sort_by(&:name)
   #       @inviter  = inviter
   #       @invitee  = invitee
-  #
-  #       subject = "#{@inviter.name.familiar} added you to some new stuff in Basecamp (#{@account.name})"
-  #
-  #       mail \
-  #         subject:   subject,
-  #         to:        invitee.email_address,
-  #         from:      common_address(inviter),
-  #         reply_to:  inviter.email_address_with_name
   #     end
   #   end
   #
-  #   InvitationsMailer.account_invitation(person_a, person_b).deliver_later
+  #   InvitationAgent.account_invitation(person_a, person_b).later
   #
-  # Using parameterized mailers, this can be rewritten as:
+  # Using parameterized agents, this can be rewritten as:
   #
-  #   class InvitationsMailer < ApplicationMailer
+  #   class InvitationAgent < ApplicationAI
   #     before_action { @inviter, @invitee = params[:inviter], params[:invitee] }
   #     before_action { @account = params[:inviter].account }
   #
-  #     default to:       -> { @invitee.email_address },
-  #             from:     -> { common_address(@inviter) },
-  #             reply_to: -> { @inviter.email_address_with_name }
-  #
   #     def account_invitation
-  #       mail subject: "#{@inviter.name} invited you to their Basecamp (#{@account.name})"
   #     end
   #
   #     def project_invitation
-  #       @project    = params[:project]
+  #       @project = params[:project]
   #       @summarizer = ProjectInvitationSummarizer.new(@project.bucket)
-  #
-  #       mail subject: "#{@inviter.name.familiar} added you to a project in Basecamp (#{@account.name})"
   #     end
   #
   #     def bulk_project_invitation
   #       @projects = params[:projects].sort_by(&:name)
-  #
-  #       mail subject: "#{@inviter.name.familiar} added you to some new stuff in Basecamp (#{@account.name})"
   #     end
   #   end
   #
-  #   InvitationsMailer.with(inviter: person_a, invitee: person_b).account_invitation.deliver_later
+  #   InvitationAgent.with(inviter: person_a, invitee: person_b).account_invitation.later
   module Parameterized
     extend ActiveSupport::Concern
 
@@ -98,55 +65,55 @@ module ActionAI
     end
 
     module ClassMethods
-      # Provide the parameters to the mailer in order to use them in the instance methods and callbacks.
+      # Provide the parameters to the agent in order to use them in the instance methods and callbacks.
       #
-      #   InvitationsMailer.with(inviter: person_a, invitee: person_b).account_invitation.deliver_later
+      #   InvitationAgent.with(inviter: person_a, invitee: person_b).account_invitation.later
       #
       # See Parameterized documentation for full example.
       def with(params)
-        ActionAI::Parameterized::Mailer.new(self, params)
+        ActionAI::Parameterized::Agent.new(self, params)
       end
     end
 
-    class Mailer # :nodoc:
-      def initialize(mailer, params)
-        @mailer, @params = mailer, params
+    class Agent # :nodoc:
+      def initialize(agent, params)
+        @agent, @params = agent, params
       end
 
       private
         def method_missing(method_name, ...)
-          if @mailer.action_methods.include?(method_name.name)
-            ActionAI::Parameterized::MessageDelivery.new(@mailer, method_name, @params, ...)
+          if @agent.action_methods.include?(method_name.name)
+            ActionAI::Parameterized::PromptExecution.new(@agent, method_name, @params, ...)
           else
             super
           end
         end
 
         def respond_to_missing?(method, include_all = false)
-          @mailer.respond_to?(method, include_all)
+          @agent.respond_to?(method, include_all)
         end
     end
 
-    class MessageDelivery < ActionAI::MessageDelivery # :nodoc:
-      def initialize(mailer_class, action, params, ...)
-        super(mailer_class, action, ...)
+    class PromptExecution < ActionAI::Interaction # :nodoc:
+      def initialize(agent_class, action, params, ...)
+        super(agent_class, action, ...)
         @params = params
       end
 
       private
-        def processed_mailer
-          @processed_mailer ||= @mailer_class.new.tap do |mailer|
-            mailer.params = @params
-            mailer.process @action, *@args
+        def processed_agent
+          @processed_agent ||= @agent_class.new.tap do |agent|
+            agent.params = @params
+            agent.process @action, *@args
           end
         end
 
-        def enqueue_delivery(delivery_method, options = {})
+        def enqueue_execution(...)
           if processed?
             super
           else
-            @mailer_class.delivery_job.set(options).perform_later(
-              @mailer_class.name, @action.to_s, delivery_method.to_s, params: @params, args: @args)
+            @agent_class.execution_job.set(...).perform_later(
+              @agent_class.name, @action.to_s, params: @params, args: @args)
           end
         end
     end

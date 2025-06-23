@@ -2,92 +2,82 @@
 
 require "abstract_unit"
 require "active_job"
-require "mailers/params_mailer"
+require "agents/params_agent"
 
 class ParameterizedTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
-  class DummyDeliveryJob < ActionAI::MailDeliveryJob
+  class DummyExecutionJob < ActionAI::ExecutionJob
   end
 
   setup do
     @previous_logger = ActiveJob::Base.logger
     ActiveJob::Base.logger = Logger.new(nil)
 
-    @previous_delivery_method = ActionAI::Base.delivery_method
-    ActionAI::Base.delivery_method = :test
-
-    @mail = ParamsMailer.with(inviter: "david@basecamp.com", invitee: "jason@basecamp.com").invitation
+    @interaction = ParamsAgent.with(inviter: "david@basecamp.com", invitee: "jason@basecamp.com").invitation
   end
 
   teardown do
     ActiveJob::Base.logger = @previous_logger
-    ParamsMailer.deliveries.clear
-    ActionAI::Base.delivery_method = @previous_delivery_method
   end
 
-  test "parameterized headers" do
-    assert_equal(["jason@basecamp.com"], @mail.to)
-    assert_equal(["david@basecamp.com"], @mail.from)
-    assert_equal("So says david@basecamp.com", @mail.body.encoded)
+  test "parameterized prompt" do
+    assert_equal("david@basecamp.com welcomes jason@basecamp.com to the project", @interaction.content)
   end
 
   test "degrade gracefully when .with is not called" do
-    @mail = ParamsMailer.invitation
+    @interaction = ParamsAgent.invitation
 
-    assert_nil(@mail.to)
-    assert_nil(@mail.from)
+    assert_equal(" welcomes  to the project", @interaction.content)
   end
 
-  test "enqueue the email with params" do
+  test "enqueue the job with params" do
     args = [
-      "ParamsMailer",
+      "ParamsAgent",
       "invitation",
-      "deliver_now",
       params: { inviter: "david@basecamp.com", invitee: "jason@basecamp.com" },
       args: [],
     ]
-    assert_performed_with(job: ActionAI::MailDeliveryJob, args: args) do
-      @mail.deliver_later
+    assert_performed_with(job: ActionAI::ExecutionJob, args: args) do
+      @interaction.later
     end
   end
 
   test "respond_to?" do
-    mailer = ParamsMailer.with(inviter: "david@basecamp.com", invitee: "jason@basecamp.com")
+    agent = ParamsAgent.with(inviter: "david@basecamp.com", invitee: "jason@basecamp.com")
 
-    assert_respond_to mailer, :invitation
-    assert_not_respond_to mailer, :anything
+    assert_respond_to agent, :invitation
+    assert_not_respond_to agent, :anything
 
-    invitation = mailer.method(:invitation)
+    invitation = agent.method(:invitation)
     assert_equal Method, invitation.class
 
     assert_raises(NameError) do
-      invitation = mailer.method(:anything)
+      invitation = agent.method(:anything)
     end
   end
 
-  test "should enqueue a parameterized request with the correct delivery job" do
+  test "should enqueue a parameterized request with the correct execution job" do
     args = [
-      "ParamsMailer",
+      "ParamsAgent",
       "invitation",
-      "deliver_now",
       params: { inviter: "david@basecamp.com", invitee: "jason@basecamp.com" },
       args: [],
     ]
 
-    with_delivery_job DummyDeliveryJob do
-      assert_performed_with(job: DummyDeliveryJob, args: args) do
-        @mail.deliver_later
+    with_execution_job DummyExecutionJob do
+      assert_performed_with(job: DummyExecutionJob, args: args) do
+        @interaction.later
       end
     end
   end
 
   private
-    def with_delivery_job(job)
-      old_delivery_job = ParamsMailer.delivery_job
-      ParamsMailer.delivery_job = job
+    def with_execution_job(job)
+      old_execution_job = ParamsAgent.execution_job
+      ParamsAgent.execution_job = job
       yield
     ensure
-      ParamsMailer.delivery_job = old_delivery_job
+      ParamsAgent.execution_job = old_execution_job
     end
 end

@@ -15,7 +15,7 @@ AppRoutes.draw do
   get "/a/b(/:id)", to: "a#b"
 end
 
-class UrlTestMailer < ActionAI::Base
+class UrlTestAgent < ActionAI::Agent
   include AppRoutes.url_helpers
 
   default_url_options[:host] = "www.basecamphq.com"
@@ -27,14 +27,13 @@ class UrlTestMailer < ActionAI::Base
   def signed_up_with_url(recipient)
     @recipient   = recipient
     @welcome_url = url_for host: "example.com", controller: "welcome", action: "greeting"
-    mail(to: recipient, subject: "[Signed up] Welcome #{recipient}",
-      from: "system@loudthinking.com", date: Time.local(2004, 12, 12))
+    ask
   end
 
   def exercise_url_for(options)
     @options = options
     @url = url_for(@options)
-    mail(from: "from@example.com", to: "to@example.com", subject: "subject")
+    ask
   end
 end
 
@@ -57,18 +56,13 @@ class ActionAIUrlTest < ActionAI::TestCase
     end
   end
 
-  def new_mail(charset = "UTF-8")
-    mail = Mail.new
-    mail.mime_version = "1.0"
-    if charset
-      mail.content_type ["text", "plain", { "charset" => charset }]
-    end
-    mail
+  def new_message(content, role: :assistant)
+    RubyLLM::Message.new content:, role:
   end
 
   def assert_url_for(expected, options, relative = false)
     expected = "http://www.basecamphq.com#{expected}" if expected.start_with?("/") && !relative
-    urls = UrlTestMailer.exercise_url_for(options).body.to_s.chomp.split
+    urls = UrlTestAgent.exercise_url_for(options).content.chomp.split
 
     assert_equal expected, urls.first
     assert_equal expected, urls.second
@@ -79,8 +73,6 @@ class ActionAIUrlTest < ActionAI::TestCase
   end
 
   def test_url_for
-    UrlTestMailer.delivery_method = :test
-
     # string
     assert_url_for "http://foo/", "http://foo/"
 
@@ -102,29 +94,12 @@ class ActionAIUrlTest < ActionAI::TestCase
   end
 
   def test_signed_up_with_url
-    UrlTestMailer.delivery_method = :test
-
-    expected = new_mail
-    expected.to      = @recipient
-    expected.subject = "[Signed up] Welcome #{@recipient}"
-    expected.body    = "Hello there,\n\nMr. #{@recipient}. Please see our greeting at http://example.com/welcome/greeting http://www.basecamphq.com/welcome\n\n<img src=\"/images/somelogo.png\" />"
-    expected.from    = "system@loudthinking.com"
-    expected.date    = Time.local(2004, 12, 12)
-    expected.content_type = "text/html"
+    expected = new_message "Hello there,\n\nMr. #{@recipient}. Please see our greeting at http://example.com/welcome/greeting http://www.basecamphq.com/welcome\n\n<img src=\"/images/somelogo.png\" />"
 
     created = nil
-    assert_nothing_raised { created = UrlTestMailer.signed_up_with_url(@recipient) }
+    assert_nothing_raised { created = UrlTestAgent.signed_up_with_url(@recipient) }
     assert_not_nil created
 
-    expected.message_id = "<123@456>"
-    created.message_id = "<123@456>"
-    assert_dom_equal expected.encoded, created.encoded
-
-    assert_nothing_raised { UrlTestMailer.signed_up_with_url(@recipient).deliver_now }
-    assert_not_nil ActionAI::Base.deliveries.first
-    delivered = ActionAI::Base.deliveries.first
-
-    delivered.message_id = "<123@456>"
-    assert_dom_equal expected.encoded, delivered.encoded
+    assert_equal expected.content, created.content
   end
 end

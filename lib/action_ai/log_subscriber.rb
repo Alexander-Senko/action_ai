@@ -3,40 +3,24 @@
 require "active_support/log_subscriber"
 
 module ActionAI
-  # = Action Mailer \LogSubscriber
+  # = Action AI \LogSubscriber
   #
   # Implements the ActiveSupport::LogSubscriber for logging notifications when
-  # email is delivered or received.
+  # a prompt is executed.
   class LogSubscriber < ActiveSupport::LogSubscriber
-    # An email was delivered.
-    def deliver(event)
-      info do
-        if exception = event.payload[:exception_object]
-          "Failed delivery of mail #{event.payload[:message_id]} error_class=#{exception.class} error_message=#{exception.message.inspect}"
-        elsif event.payload[:perform_deliveries]
-          "Delivered mail #{event.payload[:message_id]} (#{event.duration.round(1)}ms)"
-        else
-          "Skipped delivery of mail #{event.payload[:message_id]} as `perform_deliveries` is false"
-        end
-      end
-
-      debug { event.payload[:mail] }
-    end
-    subscribe_log_level :deliver, :debug
-
-    # An email was generated.
+    # A prompt was processed.
     def process(event)
       debug do
-        mailer = event.payload[:mailer]
+        agent  = event.payload[:agent]
         action = event.payload[:action]
-        "#{mailer}##{action}: processed outbound mail in #{event.duration.round(1)}ms"
+        "#{agent}##{action}: executed prompt in #{event.duration.round(1)}ms"
       end
     end
     subscribe_log_level :process, :debug
 
-    # Use the logger configured for ActionAI::Base.
+    # Use the logger configured for ActionAI::Agent.
     def logger
-      ActionAI::Base.logger
+      ActionAI::Agent.logger
     end
   end
 end

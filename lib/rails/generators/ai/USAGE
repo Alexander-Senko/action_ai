@@ -1,0 +1,20 @@
+Description:
+    Generates a new AI agent and its prompts. Passes the agent name, either
+    CamelCased or under_scored, and an optional list of prompts as arguments.
+
+    This generates an agent class in app/ai/agents and invokes your template
+    engine and test framework generators.
+
+Examples:
+    `bin/rails generate ai generator`
+
+    creates a generator agent class, prompts, and test:
+        Agent:      app/ai/agents/generator.rb
+        Views:      app/ai/prompts/generator/code.erb [...]
+        Test:       test/ai/agents/generator_test.rb
+
+    `bin/rails generate ai generator text image video`
+
+    creates a generator agent with text, image, and video actions.
+
+
