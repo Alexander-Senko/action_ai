@@ -2,27 +2,27 @@
 
 require "active_support/descendants_tracker"
 
-module ActionMailer
+module ActionAI
   module Previews # :nodoc:
     extend ActiveSupport::Concern
 
     included do
       # Add the location of mailer previews through app configuration:
       #
-      #     config.action_mailer.preview_paths << "#{Rails.root}/lib/mailer_previews"
+      #     config.action_ai.preview_paths << "#{Rails.root}/lib/mailer_previews"
       #
       mattr_accessor :preview_paths, instance_writer: false, default: []
 
       # Enable or disable mailer previews through app configuration:
       #
-      #     config.action_mailer.show_previews = true
+      #     config.action_ai.show_previews = true
       #
       # Defaults to +true+ for development environment
       #
       mattr_accessor :show_previews, instance_writer: false
 
       # :nodoc:
-      mattr_accessor :preview_interceptors, instance_writer: false, default: [ActionMailer::InlinePreviewInterceptor]
+      mattr_accessor :preview_interceptors, instance_writer: false, default: [ActionAI::InlinePreviewInterceptor]
     end
 
     module ClassMethods

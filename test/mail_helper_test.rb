@@ -2,7 +2,7 @@
 
 require "abstract_unit"
 
-class HelperMailer < ActionMailer::Base
+class HelperMailer < ActionAI::Base
   def use_mail_helper
     @text = "But soft! What light through yonder window breaks? It is the east, " \
             "and Juliet is the sun. Arise, fair sun, and kill the envious moon, " \
@@ -74,7 +74,7 @@ The second
     end
 end
 
-class MailerHelperTest < ActionMailer::TestCase
+class MailerHelperTest < ActionAI::TestCase
   def test_use_mail_helper
     mail = HelperMailer.use_mail_helper
     assert_match %r{  But soft!}, mail.body.encoded
@@ -123,7 +123,7 @@ class MailerHelperTest < ActionMailer::TestCase
   end
 
   def helper
-    Object.new.extend(ActionMailer::MailHelper)
+    Object.new.extend(ActionAI::MailHelper)
   end
 
   def test_block_format

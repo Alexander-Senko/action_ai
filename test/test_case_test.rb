@@ -2,48 +2,48 @@
 
 require "abstract_unit"
 
-class TestTestMailer < ActionMailer::Base
+class TestTestMailer < ActionAI::Base
 end
 
 class ClearTestDeliveriesMixinTest < ActiveSupport::TestCase
-  include ActionMailer::TestCase::ClearTestDeliveries
+  include ActionAI::TestCase::ClearTestDeliveries
 
   def before_setup
-    ActionMailer::Base.delivery_method, @original_delivery_method = :test, ActionMailer::Base.delivery_method
-    ActionMailer::Base.deliveries << "better clear me, setup"
+    ActionAI::Base.delivery_method, @original_delivery_method = :test, ActionAI::Base.delivery_method
+    ActionAI::Base.deliveries << "better clear me, setup"
     super
   end
 
   def after_teardown
     super
-    assert_equal [], ActionMailer::Base.deliveries
-    ActionMailer::Base.delivery_method = @original_delivery_method
+    assert_equal [], ActionAI::Base.deliveries
+    ActionAI::Base.delivery_method = @original_delivery_method
   end
 
   def test_deliveries_are_cleared_on_setup_and_teardown
-    assert_equal [], ActionMailer::Base.deliveries
-    ActionMailer::Base.deliveries << "better clear me, teardown"
+    assert_equal [], ActionAI::Base.deliveries
+    ActionAI::Base.deliveries << "better clear me, teardown"
   end
 end
 
-class MailerDeliveriesClearingTest < ActionMailer::TestCase
+class MailerDeliveriesClearingTest < ActionAI::TestCase
   def before_setup
-    ActionMailer::Base.deliveries << "better clear me, setup"
+    ActionAI::Base.deliveries << "better clear me, setup"
     super
   end
 
   def after_teardown
     super
-    assert_equal [], ActionMailer::Base.deliveries
+    assert_equal [], ActionAI::Base.deliveries
   end
 
   def test_deliveries_are_cleared_on_setup_and_teardown
-    assert_equal [], ActionMailer::Base.deliveries
-    ActionMailer::Base.deliveries << "better clear me, teardown"
+    assert_equal [], ActionAI::Base.deliveries
+    ActionAI::Base.deliveries << "better clear me, teardown"
   end
 end
 
-class ManuallySetNameMailerTest < ActionMailer::TestCase
+class ManuallySetNameMailerTest < ActionAI::TestCase
   tests TestTestMailer
 
   def test_set_mailer_class_manual
@@ -51,7 +51,7 @@ class ManuallySetNameMailerTest < ActionMailer::TestCase
   end
 end
 
-class ManuallySetSymbolNameMailerTest < ActionMailer::TestCase
+class ManuallySetSymbolNameMailerTest < ActionAI::TestCase
   tests :test_test_mailer
 
   def test_set_mailer_class_manual_using_symbol
@@ -59,7 +59,7 @@ class ManuallySetSymbolNameMailerTest < ActionMailer::TestCase
   end
 end
 
-class ManuallySetStringNameMailerTest < ActionMailer::TestCase
+class ManuallySetStringNameMailerTest < ActionAI::TestCase
   tests "test_test_mailer"
 
   def test_set_mailer_class_manual_using_string

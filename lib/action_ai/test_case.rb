@@ -3,7 +3,7 @@
 require "active_support/test_case"
 require "rails-dom-testing"
 
-module ActionMailer
+module ActionAI
   class NonInferrableMailerError < ::StandardError
     def initialize(name)
       super "Unable to determine the mailer to test from #{name}. " \
@@ -23,8 +23,8 @@ module ActionMailer
 
       private
         def clear_test_deliveries
-          if ActionMailer::Base.delivery_method == :test
-            ActionMailer::Base.deliveries.clear
+          if ActionAI::Base.delivery_method == :test
+            ActionAI::Base.deliveries.clear
           end
         end
     end
@@ -42,7 +42,7 @@ module ActionMailer
         setup :initialize_test_deliveries
         setup :set_expected_mail
         teardown :restore_test_deliveries
-        ActiveSupport.run_load_hooks(:action_mailer_test_case, self)
+        ActiveSupport.run_load_hooks(:action_ai_test_case, self)
       end
 
       module ClassMethods
@@ -67,7 +67,7 @@ module ActionMailer
 
         def determine_default_mailer(name)
           mailer = determine_constant_from_test_name(name) do |constant|
-            Class === constant && constant < ActionMailer::Base
+            Class === constant && constant < ActionAI::Base
           end
           raise NonInferrableMailerError.new(name) if mailer.nil?
           mailer
@@ -86,24 +86,24 @@ module ActionMailer
       private
         def initialize_test_deliveries
           set_delivery_method :test
-          @old_perform_deliveries = ActionMailer::Base.perform_deliveries
-          ActionMailer::Base.perform_deliveries = true
-          ActionMailer::Base.deliveries.clear
+          @old_perform_deliveries = ActionAI::Base.perform_deliveries
+          ActionAI::Base.perform_deliveries = true
+          ActionAI::Base.deliveries.clear
         end
 
         def restore_test_deliveries
           restore_delivery_method
-          ActionMailer::Base.perform_deliveries = @old_perform_deliveries
+          ActionAI::Base.perform_deliveries = @old_perform_deliveries
         end
 
         def set_delivery_method(method)
-          @old_delivery_method = ActionMailer::Base.delivery_method
-          ActionMailer::Base.delivery_method = method
+          @old_delivery_method = ActionAI::Base.delivery_method
+          ActionAI::Base.delivery_method = method
         end
 
         def restore_delivery_method
-          ActionMailer::Base.deliveries.clear
-          ActionMailer::Base.delivery_method = @old_delivery_method
+          ActionAI::Base.deliveries.clear
+          ActionAI::Base.delivery_method = @old_delivery_method
         end
 
         def set_expected_mail

@@ -2,7 +2,7 @@
 
 require "abstract_unit"
 
-class AutoLayoutMailer < ActionMailer::Base
+class AutoLayoutMailer < ActionAI::Base
   default to: "test@localhost",
     subject: "You have a mail",
     from: "tester@example.com"
@@ -29,7 +29,7 @@ class AutoLayoutMailer < ActionMailer::Base
   end
 end
 
-class ExplicitLayoutMailer < ActionMailer::Base
+class ExplicitLayoutMailer < ActionAI::Base
   layout "spam", except: [:logout]
 
   default to: "test@localhost",

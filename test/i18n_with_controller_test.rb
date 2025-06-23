@@ -4,7 +4,7 @@ require "abstract_unit"
 require "action_view"
 require "action_controller"
 
-class I18nTestMailer < ActionMailer::Base
+class I18nTestMailer < ActionAI::Base
   configure do |c|
     c.assets_dir = ""
   end
@@ -24,7 +24,7 @@ class TestController < ActionController::Base
   end
 end
 
-class ActionMailerI18nWithControllerTest < ActionDispatch::IntegrationTest
+class ActionAII18nWithControllerTest < ActionDispatch::IntegrationTest
   Routes = ActionDispatch::Routing::RouteSet.new
   Routes.draw do
     ActionDispatch.deprecator.silence do

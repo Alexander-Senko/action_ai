@@ -30,12 +30,12 @@ class DefaultsDeliveryMethodsTest < ActiveSupport::TestCase
                  password:             nil,
                  authentication:       nil,
                  enable_starttls_auto: true }
-    assert_equal settings, ActionMailer::Base.smtp_settings
+    assert_equal settings, ActionAI::Base.smtp_settings
   end
 
   test "default file delivery settings (with Rails.root)" do
     settings = { location: "#{Rails.root}/tmp/mails" }
-    assert_equal settings, ActionMailer::Base.file_settings
+    assert_equal settings, ActionAI::Base.file_settings
   end
 
   test "default sendmail settings" do
@@ -43,47 +43,47 @@ class DefaultsDeliveryMethodsTest < ActiveSupport::TestCase
       location:  "/usr/sbin/sendmail",
       arguments: %w[ -i ]
     }
-    assert_equal settings, ActionMailer::Base.sendmail_settings
+    assert_equal settings, ActionAI::Base.sendmail_settings
   end
 end
 
 class CustomDeliveryMethodsTest < ActiveSupport::TestCase
   setup do
-    @old_delivery_method = ActionMailer::Base.delivery_method
-    ActionMailer::Base.add_delivery_method :custom, MyCustomDelivery
+    @old_delivery_method = ActionAI::Base.delivery_method
+    ActionAI::Base.add_delivery_method :custom, MyCustomDelivery
   end
 
   teardown do
-    ActionMailer::Base.delivery_method = @old_delivery_method
-    new = ActionMailer::Base.delivery_methods.dup
+    ActionAI::Base.delivery_method = @old_delivery_method
+    new = ActionAI::Base.delivery_methods.dup
     new.delete(:custom)
-    ActionMailer::Base.delivery_methods = new
+    ActionAI::Base.delivery_methods = new
   end
 
   test "allow to add custom delivery method" do
-    ActionMailer::Base.delivery_method = :custom
-    assert_equal :custom, ActionMailer::Base.delivery_method
+    ActionAI::Base.delivery_method = :custom
+    assert_equal :custom, ActionAI::Base.delivery_method
   end
 
   test "allow to customize custom settings" do
-    ActionMailer::Base.custom_settings = { foo: :bar }
-    assert_equal Hash[foo: :bar], ActionMailer::Base.custom_settings
+    ActionAI::Base.custom_settings = { foo: :bar }
+    assert_equal Hash[foo: :bar], ActionAI::Base.custom_settings
   end
 
   test "respond to custom settings" do
-    assert_respond_to ActionMailer::Base, :custom_settings
-    assert_respond_to ActionMailer::Base, :custom_settings=
+    assert_respond_to ActionAI::Base, :custom_settings
+    assert_respond_to ActionAI::Base, :custom_settings=
   end
 
   test "does not respond to unknown settings" do
     assert_raise NoMethodError do
-      ActionMailer::Base.another_settings
+      ActionAI::Base.another_settings
     end
   end
 end
 
 class MailDeliveryTest < ActiveSupport::TestCase
-  class DeliveryMailer < ActionMailer::Base
+  class DeliveryMailer < ActionAI::Base
     DEFAULT_HEADERS = {
       to: "mikel@test.lindsaar.net",
       from: "jose@test.plataformatec.com"
@@ -103,7 +103,7 @@ class MailDeliveryTest < ActiveSupport::TestCase
     DeliveryMailer.deliveries.clear
   end
 
-  test "ActionMailer should be told when Mail gets delivered" do
+  test "ActionAI should be told when Mail gets delivered" do
     DeliveryMailer.delivery_method = :test
     assert_called(DeliveryMailer, :deliver_mail) do
       DeliveryMailer.welcome.deliver_now
@@ -123,21 +123,21 @@ class MailDeliveryTest < ActiveSupport::TestCase
 
   test "delivery method can be customized in subclasses not changing the parent" do
     DeliveryMailer.delivery_method = :test
-    assert_equal :smtp, ActionMailer::Base.delivery_method
+    assert_equal :smtp, ActionAI::Base.delivery_method
     email = DeliveryMailer.welcome.deliver_now
     assert_instance_of Mail::TestMailer, email.delivery_method
   end
 
   test "delivery method options default to class level options" do
     default_options = { a: "b" }
-    ActionMailer::Base.add_delivery_method :optioned, MyOptionedDelivery, default_options
+    ActionAI::Base.add_delivery_method :optioned, MyOptionedDelivery, default_options
     mail_instance = DeliveryMailer.welcome(delivery_method: :optioned)
     assert_equal default_options, mail_instance.delivery_method.options
   end
 
   test "delivery method options can be overridden per mail instance" do
     default_options = { a: "b" }
-    ActionMailer::Base.add_delivery_method :optioned, MyOptionedDelivery, default_options
+    ActionAI::Base.add_delivery_method :optioned, MyOptionedDelivery, default_options
     overridden_options = { a: "a" }
     mail_instance = DeliveryMailer.welcome(delivery_method: :optioned, delivery_method_options: overridden_options)
     assert_equal overridden_options, mail_instance.delivery_method.options
@@ -153,7 +153,7 @@ class MailDeliveryTest < ActiveSupport::TestCase
       authentication: nil,
       enable_starttls_auto: true
     }
-    assert_equal settings, ActionMailer::Base.smtp_settings
+    assert_equal settings, ActionAI::Base.smtp_settings
     overridden_options = { user_name: "overridden", password: "somethingobtuse" }
     mail_instance = DeliveryMailer.welcome(delivery_method_options: overridden_options)
     delivery_method_instance = mail_instance.delivery_method
@@ -161,8 +161,8 @@ class MailDeliveryTest < ActiveSupport::TestCase
     assert_equal "somethingobtuse", delivery_method_instance.settings[:password]
     assert_equal delivery_method_instance.settings.merge(overridden_options), delivery_method_instance.settings
 
-    # make sure that overriding delivery method options per mail instance doesn't affect the Base setting
-    assert_equal settings, ActionMailer::Base.smtp_settings
+    # make sure that overriding delivery method options per mail instance doesn't affect the Agent setting
+    assert_equal settings, ActionAI::Base.smtp_settings
   end
 
   test "non registered delivery methods raises errors" do

@@ -9,7 +9,7 @@ CACHE_DIR = "test_cache"
 # Don't change '/../temp/' cavalierly or you might hose something you don't want hosed
 FILE_STORE_PATH = File.join(__dir__, "/../temp/", CACHE_DIR)
 
-class FragmentCachingMailer < ActionMailer::Base
+class FragmentCachingMailer < ActionAI::Base
   abstract!
 
   def some_action; end
@@ -177,7 +177,7 @@ class FunctionalFragmentCachingTest < BaseCachingTest
       key: [:views, "caching_mailer/fragment_cache:#{template_digest("caching_mailer/fragment_cache", "html")}", :caching]
     }
 
-    assert_notification("read_fragment.action_mailer", expected_payload) do
+    assert_notification("read_fragment.action_ai", expected_payload) do
       @mailer.fragment_cache
     end
   ensure
@@ -226,9 +226,9 @@ class CacheHelperOutputBufferTest < BaseCachingTest
 end
 
 class ViewCacheDependencyTest < BaseCachingTest
-  class NoDependenciesMailer < ActionMailer::Base
+  class NoDependenciesMailer < ActionAI::Base
   end
-  class HasDependenciesMailer < ActionMailer::Base
+  class HasDependenciesMailer < ActionAI::Base
     view_cache_dependency { "trombone" }
     view_cache_dependency { "flute" }
   end

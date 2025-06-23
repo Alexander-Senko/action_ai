@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ActionMailer # :nodoc:
+module ActionAI # :nodoc:
   # = Action Mailer \Rescuable
   #
   # Provides

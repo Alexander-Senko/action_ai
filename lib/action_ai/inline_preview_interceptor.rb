@@ -2,7 +2,7 @@
 
 require "base64"
 
-module ActionMailer
+module ActionAI
   # = Action Mailer \InlinePreviewInterceptor
   #
   # Implements a mailer preview interceptor that converts image tag src attributes

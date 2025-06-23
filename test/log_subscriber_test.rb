@@ -3,14 +3,14 @@
 require "abstract_unit"
 require "mailers/base_mailer"
 require "active_support/log_subscriber/test_helper"
-require "action_mailer/log_subscriber"
+require "action_ai/log_subscriber"
 
-class AMLogSubscriberTest < ActionMailer::TestCase
+class AMLogSubscriberTest < ActionAI::TestCase
   include ActiveSupport::LogSubscriber::TestHelper
 
   def setup
     super
-    ActionMailer::LogSubscriber.attach_to :action_mailer
+    ActionAI::LogSubscriber.attach_to :action_ai
   end
 
   class BogusDelivery
@@ -23,7 +23,7 @@ class AMLogSubscriberTest < ActionMailer::TestCase
   end
 
   def set_logger(logger)
-    ActionMailer::Base.logger = logger
+    ActionAI::Base.logger = logger
   end
 
   def test_deliver_is_notified

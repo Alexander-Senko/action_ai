@@ -3,7 +3,7 @@
 require "abstract_unit"
 require "active_support/testing/stream"
 
-class TestHelperMailer < ActionMailer::Base
+class TestHelperMailer < ActionAI::Base
   def test
     @world = "Earth"
     mail body: render(inline: "Hello, <%= @world %>"),
@@ -31,7 +31,7 @@ class TestHelperMailer < ActionMailer::Base
   end
 end
 
-class CustomDeliveryJob < ActionMailer::MailDeliveryJob
+class CustomDeliveryJob < ActionAI::MailDeliveryJob
 end
 
 class CustomDeliveryMailer < TestHelperMailer
@@ -42,21 +42,21 @@ class CustomQueueMailer < TestHelperMailer
   self.deliver_later_queue_name = :custom_queue
 end
 
-class TestHelperMailerTest < ActionMailer::TestCase
+class TestHelperMailerTest < ActionAI::TestCase
   include ActiveSupport::Testing::Stream
 
   setup do
-    @previous_deliver_later_queue_name = ActionMailer::Base.deliver_later_queue_name
+    @previous_deliver_later_queue_name = ActionAI::Base.deliver_later_queue_name
   end
 
   teardown do
-    ActionMailer::Base.deliver_later_queue_name = @previous_deliver_later_queue_name
+    ActionAI::Base.deliver_later_queue_name = @previous_deliver_later_queue_name
   end
 
-  def test_setup_sets_right_action_mailer_options
-    assert_equal :test, ActionMailer::Base.delivery_method
-    assert ActionMailer::Base.perform_deliveries
-    assert_equal [], ActionMailer::Base.deliveries
+  def test_setup_sets_right_action_ai_options
+    assert_equal :test, ActionAI::Base.delivery_method
+    assert ActionAI::Base.perform_deliveries
+    assert_equal [], ActionAI::Base.deliveries
   end
 
   def test_setup_creates_the_expected_mailer
@@ -70,7 +70,7 @@ class TestHelperMailerTest < ActionMailer::TestCase
   end
 
   def test_determine_default_mailer_raises_correct_error
-    assert_raise(ActionMailer::NonInferrableMailerError) do
+    assert_raise(ActionAI::NonInferrableMailerError) do
       self.class.determine_default_mailer("NotAMailerTest")
     end
   end
@@ -329,7 +329,7 @@ class TestHelperMailerTest < ActionMailer::TestCase
   end
 
   def test_assert_enqueued_email_with_when_deliver_later_queue_name_is_nil
-    ActionMailer::Base.deliver_later_queue_name = nil
+    ActionAI::Base.deliver_later_queue_name = nil
 
     assert_nothing_raised do
       assert_enqueued_email_with TestHelperMailer, :test do
@@ -341,7 +341,7 @@ class TestHelperMailerTest < ActionMailer::TestCase
   end
 
   def test_assert_enqueued_email_with_when_deliver_later_queue_name_with_non_default_name
-    ActionMailer::Base.deliver_later_queue_name = "sample_mailer_queue_name"
+    ActionAI::Base.deliver_later_queue_name = "sample_mailer_queue_name"
 
     assert_nothing_raised do
       assert_enqueued_email_with TestHelperMailer, :test do
@@ -353,7 +353,7 @@ class TestHelperMailerTest < ActionMailer::TestCase
   end
 
   def test_assert_enqueued_email_with_when_deliver_later_queue_name_is_symbol
-    ActionMailer::Base.deliver_later_queue_name = :mailers
+    ActionAI::Base.deliver_later_queue_name = :mailers
 
     assert_nothing_raised do
       assert_enqueued_email_with TestHelperMailer, :test do
@@ -365,7 +365,7 @@ class TestHelperMailerTest < ActionMailer::TestCase
   end
 
   def test_assert_enqueued_email_with_when_queue_arg_is_symbol
-    ActionMailer::Base.deliver_later_queue_name = "mailers"
+    ActionAI::Base.deliver_later_queue_name = "mailers"
 
     assert_nothing_raised do
       assert_enqueued_email_with TestHelperMailer, :test, queue: :mailers do
@@ -608,7 +608,7 @@ class TestHelperMailerTest < ActionMailer::TestCase
   end
 end
 
-class AnotherTestHelperMailerTest < ActionMailer::TestCase
+class AnotherTestHelperMailerTest < ActionAI::TestCase
   tests TestHelperMailer
 
   def setup
@@ -621,7 +621,7 @@ class AnotherTestHelperMailerTest < ActionMailer::TestCase
   end
 end
 
-class AdapterIsNotTestAdapterTest < ActionMailer::TestCase
+class AdapterIsNotTestAdapterTest < ActionAI::TestCase
   def queue_adapter_for_test
     ActiveJob::QueueAdapters::InlineAdapter.new
   end

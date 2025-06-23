@@ -4,13 +4,13 @@ require "abstract_unit"
 require "mailers/callback_mailer"
 require "active_support/testing/stream"
 
-class ActionMailerCallbacksTest < ActiveSupport::TestCase
+class ActionAICallbacksTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
   include ActiveSupport::Testing::Stream
 
   setup do
-    @previous_delivery_method = ActionMailer::Base.delivery_method
-    ActionMailer::Base.delivery_method = :test
+    @previous_delivery_method = ActionAI::Base.delivery_method
+    ActionAI::Base.delivery_method = :test
     CallbackMailer.rescue_from_error = nil
     CallbackMailer.after_deliver_instance = nil
     CallbackMailer.around_deliver_instance = nil
@@ -19,8 +19,8 @@ class ActionMailerCallbacksTest < ActiveSupport::TestCase
   end
 
   teardown do
-    ActionMailer::Base.deliveries.clear
-    ActionMailer::Base.delivery_method = @previous_delivery_method
+    ActionAI::Base.deliveries.clear
+    ActionAI::Base.delivery_method = @previous_delivery_method
     CallbackMailer.rescue_from_error = nil
     CallbackMailer.after_deliver_instance = nil
     CallbackMailer.around_deliver_instance = nil

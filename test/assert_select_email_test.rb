@@ -2,15 +2,15 @@
 
 require "abstract_unit"
 
-class AssertSelectEmailTest < ActionMailer::TestCase
-  class AssertSelectMailer < ActionMailer::Base
+class AssertSelectEmailTest < ActionAI::TestCase
+  class AssertSelectMailer < ActionAI::Base
     def test(html)
       mail body: html, content_type: "text/html",
         subject: "Test e-mail", from: "test@test.host", to: "test <test@test.host>"
     end
   end
 
-  class AssertMultipartSelectMailer < ActionMailer::Base
+  class AssertMultipartSelectMailer < ActionAI::Base
     def test(options)
       mail subject: "Test e-mail", from: "test@test.host", to: "test <test@test.host>" do |format|
         format.text { render plain: options[:text] }

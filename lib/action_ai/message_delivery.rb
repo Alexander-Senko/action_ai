@@ -2,7 +2,7 @@
 
 require "delegate"
 
-module ActionMailer
+module ActionAI
   # = Action Mailer \MessageDelivery
   #
   # The +ActionMailer::MessageDelivery+ class is used by

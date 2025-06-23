@@ -7,15 +7,15 @@ require "mailers/params_mailer"
 class ParameterizedTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
-  class DummyDeliveryJob < ActionMailer::MailDeliveryJob
+  class DummyDeliveryJob < ActionAI::MailDeliveryJob
   end
 
   setup do
     @previous_logger = ActiveJob::Base.logger
     ActiveJob::Base.logger = Logger.new(nil)
 
-    @previous_delivery_method = ActionMailer::Base.delivery_method
-    ActionMailer::Base.delivery_method = :test
+    @previous_delivery_method = ActionAI::Base.delivery_method
+    ActionAI::Base.delivery_method = :test
 
     @mail = ParamsMailer.with(inviter: "david@basecamp.com", invitee: "jason@basecamp.com").invitation
   end
@@ -23,7 +23,7 @@ class ParameterizedTest < ActiveSupport::TestCase
   teardown do
     ActiveJob::Base.logger = @previous_logger
     ParamsMailer.deliveries.clear
-    ActionMailer::Base.delivery_method = @previous_delivery_method
+    ActionAI::Base.delivery_method = @previous_delivery_method
   end
 
   test "parameterized headers" do
@@ -47,7 +47,7 @@ class ParameterizedTest < ActiveSupport::TestCase
       params: { inviter: "david@basecamp.com", invitee: "jason@basecamp.com" },
       args: [],
     ]
-    assert_performed_with(job: ActionMailer::MailDeliveryJob, args: args) do
+    assert_performed_with(job: ActionAI::MailDeliveryJob, args: args) do
       @mail.deliver_later
     end
   end

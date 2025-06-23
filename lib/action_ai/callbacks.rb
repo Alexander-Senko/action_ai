@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ActionMailer
+module ActionAI
   module Callbacks
     extend ActiveSupport::Concern
 

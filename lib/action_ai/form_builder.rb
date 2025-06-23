@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ActionMailer
+module ActionAI
   # = Action Mailer Form Builder
   #
   # Override the default form builder for all views rendered by this

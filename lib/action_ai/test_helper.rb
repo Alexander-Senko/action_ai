@@ -3,7 +3,7 @@
 require "active_support/core_ext/array/extract_options"
 require "active_job"
 
-module ActionMailer
+module ActionAI
   # Provides helper methods for testing Action Mailer, including #assert_emails
   # and #assert_no_emails.
   module TestHelper
@@ -37,7 +37,7 @@ module ActionMailer
         diff = capture_emails(&block).length
         assert_equal number, diff, "#{number} emails expected, but #{diff} were sent"
       else
-        assert_equal number, ActionMailer::Base.deliveries.size
+        assert_equal number, ActionAI::Base.deliveries.size
       end
     end
 
@@ -155,7 +155,7 @@ module ActionMailer
     #     end
     #   end
     def assert_enqueued_email_with(mailer, method, params: nil, args: nil, queue: nil, &block)
-      if mailer.is_a? ActionMailer::Parameterized::Mailer
+      if mailer.is_a? ActionAI::Parameterized::Mailer
         params = mailer.instance_variable_get(:@params)
         mailer = mailer.instance_variable_get(:@mailer)
       end
@@ -247,11 +247,11 @@ module ActionMailer
     #     assert_equal "Hi there", emails.first.subject
     #   end
     def capture_emails(&block)
-      original_count = ActionMailer::Base.deliveries.size
+      original_count = ActionAI::Base.deliveries.size
       deliver_enqueued_emails(&block)
-      new_count = ActionMailer::Base.deliveries.size
+      new_count = ActionAI::Base.deliveries.size
       diff = new_count - original_count
-      ActionMailer::Base.deliveries.last(diff)
+      ActionAI::Base.deliveries.last(diff)
     end
 
     private

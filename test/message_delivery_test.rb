@@ -9,10 +9,10 @@ class MessageDeliveryTest < ActiveSupport::TestCase
 
   setup do
     @previous_logger = ActiveJob::Base.logger
-    @previous_delivery_method = ActionMailer::Base.delivery_method
+    @previous_delivery_method = ActionAI::Base.delivery_method
 
     ActiveJob::Base.logger = Logger.new(nil)
-    ActionMailer::Base.delivery_method = :test
+    ActionAI::Base.delivery_method = :test
 
     ActiveJob::Base.queue_adapter.perform_enqueued_at_jobs = true
     ActiveJob::Base.queue_adapter.perform_enqueued_jobs = true
@@ -24,10 +24,10 @@ class MessageDeliveryTest < ActiveSupport::TestCase
   end
 
   teardown do
-    ActionMailer::Base.deliveries.clear
+    ActionAI::Base.deliveries.clear
 
     ActiveJob::Base.logger = @previous_logger
-    ActionMailer::Base.delivery_method = @previous_delivery_method
+    ActionAI::Base.delivery_method = @previous_delivery_method
 
     DelayedMailer.last_error = nil
     DelayedMailer.last_rescue_from_instance = nil
@@ -58,20 +58,20 @@ class MessageDeliveryTest < ActiveSupport::TestCase
   end
 
   test "should enqueue the email with :deliver_now delivery method" do
-    assert_performed_with(job: ActionMailer::MailDeliveryJob, args: ["DelayedMailer", "test_message", "deliver_now", args: [1, 2, 3]]) do
+    assert_performed_with(job: ActionAI::MailDeliveryJob, args: ["DelayedMailer", "test_message", "deliver_now", args: [1, 2, 3]]) do
       @mail.deliver_later
     end
   end
 
   test "should enqueue the email with :deliver_now! delivery method" do
-    assert_performed_with(job: ActionMailer::MailDeliveryJob, args: ["DelayedMailer", "test_message", "deliver_now!", args: [1, 2, 3]]) do
+    assert_performed_with(job: ActionAI::MailDeliveryJob, args: ["DelayedMailer", "test_message", "deliver_now!", args: [1, 2, 3]]) do
       @mail.deliver_later!
     end
   end
 
   test "should enqueue delivery with a delay" do
     travel_to Time.new(2004, 11, 24, 1, 4, 44) do
-      assert_performed_with(job: ActionMailer::MailDeliveryJob, at: Time.current + 10.minutes, args: ["DelayedMailer", "test_message", "deliver_now", args: [1, 2, 3]]) do
+      assert_performed_with(job: ActionAI::MailDeliveryJob, at: Time.current + 10.minutes, args: ["DelayedMailer", "test_message", "deliver_now", args: [1, 2, 3]]) do
         @mail.deliver_later wait: 10.minutes
       end
     end
@@ -84,13 +84,13 @@ class MessageDeliveryTest < ActiveSupport::TestCase
 
   test "should enqueue delivery at a specific time" do
     later_time = Time.current + 1.hour
-    assert_performed_with(job: ActionMailer::MailDeliveryJob, at: later_time, args: ["DelayedMailer", "test_message", "deliver_now", args: [1, 2, 3]]) do
+    assert_performed_with(job: ActionAI::MailDeliveryJob, at: later_time, args: ["DelayedMailer", "test_message", "deliver_now", args: [1, 2, 3]]) do
       @mail.deliver_later wait_until: later_time
     end
   end
 
   test "should enqueue delivery on the correct queue" do
-    assert_performed_with(job: ActionMailer::MailDeliveryJob, args: ["DelayedMailer", "test_message", "deliver_now", args: [1, 2, 3]], queue: "delayed_mailers") do
+    assert_performed_with(job: ActionAI::MailDeliveryJob, args: ["DelayedMailer", "test_message", "deliver_now", args: [1, 2, 3]], queue: "delayed_mailers") do
       @mail.deliver_later
     end
   end
@@ -106,10 +106,10 @@ class MessageDeliveryTest < ActiveSupport::TestCase
     DelayedMailer.delivery_job = old_delivery_job
   end
 
-  class DummyJob < ActionMailer::MailDeliveryJob; end
+  class DummyJob < ActionAI::MailDeliveryJob; end
 
   test "delivery queue can be overridden when enqueuing mail" do
-    assert_performed_with(job: ActionMailer::MailDeliveryJob, args: ["DelayedMailer", "test_message", "deliver_now", args: [1, 2, 3]], queue: "another_queue") do
+    assert_performed_with(job: ActionAI::MailDeliveryJob, args: ["DelayedMailer", "test_message", "deliver_now", args: [1, 2, 3]], queue: "another_queue") do
       @mail.deliver_later(queue: :another_queue)
     end
   end
@@ -119,9 +119,9 @@ class MessageDeliveryTest < ActiveSupport::TestCase
     DelayedMailer.deliver_later_queue_name = :throttled_mailers
 
     assert_equal :throttled_mailers, DelayedMailer.deliver_later_queue_name
-    assert_equal :mailers, ActionMailer::Base.deliver_later_queue_name
+    assert_equal :mailers, ActionAI::Base.deliver_later_queue_name
 
-    assert_performed_with(job: ActionMailer::MailDeliveryJob, args: ["DelayedMailer", "test_message", "deliver_now", args: []], queue: "throttled_mailers") do
+    assert_performed_with(job: ActionAI::MailDeliveryJob, args: ["DelayedMailer", "test_message", "deliver_now", args: []], queue: "throttled_mailers") do
       DelayedMailer.test_message.deliver_later
     end
   ensure
@@ -179,7 +179,7 @@ class MessageDeliveryTest < ActiveSupport::TestCase
   end
 
   test "allows for keyword arguments" do
-    assert_performed_with(job: ActionMailer::MailDeliveryJob, args: ["DelayedMailer", "test_kwargs", "deliver_now", args: [argument: 1]]) do
+    assert_performed_with(job: ActionAI::MailDeliveryJob, args: ["DelayedMailer", "test_kwargs", "deliver_now", args: [argument: 1]]) do
       message = DelayedMailer.test_kwargs(argument: 1)
       message.deliver_later
     end

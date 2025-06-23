@@ -24,8 +24,8 @@
 #++
 
 require "abstract_controller"
-require "action_mailer/version"
-require "action_mailer/deprecator"
+require "action_ai/version"
+require "action_ai/deprecator"
 
 # Common Active Support usage in Action Mailer
 require "active_support"
@@ -36,7 +36,7 @@ require "active_support/core_ext/string/inflections"
 require "active_support/lazy_load_hooks"
 
 # :include: ../README.rdoc
-module ActionMailer
+module ActionAI
   extend ::ActiveSupport::Autoload
 
   eager_autoload do
@@ -50,7 +50,7 @@ module ActionMailer
   autoload :MailHelper
   autoload :Parameterized
   autoload :Preview
-  autoload :Previews, "action_mailer/preview"
+  autoload :Previews, "action_ai/preview"
   autoload :TestCase
   autoload :TestHelper
   autoload :MessageDelivery

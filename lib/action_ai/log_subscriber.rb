@@ -2,7 +2,7 @@
 
 require "active_support/log_subscriber"
 
-module ActionMailer
+module ActionAI
   # = Action Mailer \LogSubscriber
   #
   # Implements the ActiveSupport::LogSubscriber for logging notifications when
@@ -34,11 +34,11 @@ module ActionMailer
     end
     subscribe_log_level :process, :debug
 
-    # Use the logger configured for ActionMailer::Base.
+    # Use the logger configured for ActionAI::Base.
     def logger
-      ActionMailer::Base.logger
+      ActionAI::Base.logger
     end
   end
 end
 
-ActionMailer::LogSubscriber.attach_to :action_mailer
+ActionAI::LogSubscriber.attach_to :action_ai

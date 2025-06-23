@@ -2,7 +2,7 @@
 
 require "active_job"
 
-module ActionMailer
+module ActionAI
   # = Action Mailer \MailDeliveryJob
   #
   # The +ActionMailer::MailDeliveryJob+ class is used when you

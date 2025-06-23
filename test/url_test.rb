@@ -15,7 +15,7 @@ AppRoutes.draw do
   get "/a/b(/:id)", to: "a#b"
 end
 
-class UrlTestMailer < ActionMailer::Base
+class UrlTestMailer < ActionAI::Base
   include AppRoutes.url_helpers
 
   default_url_options[:host] = "www.basecamphq.com"
@@ -38,7 +38,7 @@ class UrlTestMailer < ActionMailer::Base
   end
 end
 
-class ActionMailerUrlTest < ActionMailer::TestCase
+class ActionAIUrlTest < ActionAI::TestCase
   class DummyModel
     def self.model_name
       Struct.new(:route_key, :name).new("dummy_model", nil)
@@ -121,8 +121,8 @@ class ActionMailerUrlTest < ActionMailer::TestCase
     assert_dom_equal expected.encoded, created.encoded
 
     assert_nothing_raised { UrlTestMailer.signed_up_with_url(@recipient).deliver_now }
-    assert_not_nil ActionMailer::Base.deliveries.first
-    delivered = ActionMailer::Base.deliveries.first
+    assert_not_nil ActionAI::Base.deliveries.first
+    delivered = ActionAI::Base.deliveries.first
 
     delivered.message_id = "<123@456>"
     assert_dom_equal expected.encoded, delivered.encoded

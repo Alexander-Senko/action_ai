@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module ActionMailer
+module ActionAI
   # = Action Mailer \Parameterized
   #
   # Provides the option to parameterize mailers in order to share instance variable
@@ -104,7 +104,7 @@ module ActionMailer
       #
       # See Parameterized documentation for full example.
       def with(params)
-        ActionMailer::Parameterized::Mailer.new(self, params)
+        ActionAI::Parameterized::Mailer.new(self, params)
       end
     end
 
@@ -116,7 +116,7 @@ module ActionMailer
       private
         def method_missing(method_name, ...)
           if @mailer.action_methods.include?(method_name.name)
-            ActionMailer::Parameterized::MessageDelivery.new(@mailer, method_name, @params, ...)
+            ActionAI::Parameterized::MessageDelivery.new(@mailer, method_name, @params, ...)
           else
             super
           end
@@ -127,7 +127,7 @@ module ActionMailer
         end
     end
 
-    class MessageDelivery < ActionMailer::MessageDelivery # :nodoc:
+    class MessageDelivery < ActionAI::MessageDelivery # :nodoc:
       def initialize(mailer_class, action, params, ...)
         super(mailer_class, action, ...)
         @params = params

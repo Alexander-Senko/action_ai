@@ -13,17 +13,17 @@ class BaseTest < ActiveSupport::TestCase
   include Rails::Dom::Testing::Assertions::DomAssertions
 
   setup do
-    @original_delivery_method = ActionMailer::Base.delivery_method
-    ActionMailer::Base.delivery_method = :test
-    @original_asset_host = ActionMailer::Base.asset_host
-    @original_assets_dir = ActionMailer::Base.assets_dir
+    @original_delivery_method       = ActionAI::Base.delivery_method
+    ActionAI::Base.delivery_method = :test
+    @original_asset_host            = ActionAI::Base.asset_host
+    @original_assets_dir            = ActionAI::Base.assets_dir
   end
 
   teardown do
-    ActionMailer::Base.asset_host = @original_asset_host
-    ActionMailer::Base.assets_dir = @original_assets_dir
+    ActionAI::Base.asset_host      = @original_asset_host
+    ActionAI::Base.assets_dir      = @original_assets_dir
     BaseMailer.deliveries.clear
-    ActionMailer::Base.delivery_method = @original_delivery_method
+    ActionAI::Base.delivery_method = @original_delivery_method
   end
 
   test "method call to mail does not raise error" do
@@ -276,7 +276,7 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "adding attachments after mail was called raises exception" do
-    class LateAttachmentMailer < ActionMailer::Base
+    class LateAttachmentMailer < ActionAI::Base
       def welcome
         mail body: "yay", from: "welcome@example.com", to: "to@example.com"
         attachments["invoice.pdf"] = "This is test File content"
@@ -288,7 +288,7 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "adding inline attachments after mail was called raises exception" do
-    class LateInlineAttachmentMailer < ActionMailer::Base
+    class LateInlineAttachmentMailer < ActionAI::Base
       def welcome
         mail body: "yay", from: "welcome@example.com", to: "to@example.com"
         attachments.inline["invoice.pdf"] = "This is test File content"
@@ -300,7 +300,7 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "accessing inline attachments after mail was called works" do
-    class LateInlineAttachmentAccessorMailer < ActionMailer::Base
+    class LateInlineAttachmentAccessorMailer < ActionAI::Base
       def welcome
         mail body: "yay", from: "welcome@example.com", to: "to@example.com"
         attachments.inline["invoice.pdf"]
@@ -311,7 +311,7 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "adding inline attachments while rendering mail works" do
-    class LateInlineAttachmentMailer < ActionMailer::Base
+    class LateInlineAttachmentMailer < ActionAI::Base
       def on_render
         mail from: "welcome@example.com", to: "to@example.com"
       end
@@ -325,7 +325,7 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "accessing attachments works after mail was called" do
-    class LateAttachmentAccessorMailer < ActionMailer::Base
+    class LateAttachmentAccessorMailer < ActionAI::Base
       def welcome
         attachments["invoice.pdf"] = "This is test File content"
         mail body: "yay", from: "welcome@example.com", to: "to@example.com"
@@ -581,7 +581,7 @@ class BaseTest < ActiveSupport::TestCase
     assert_equal(1, BaseMailer.deliveries.length)
   end
 
-  test "calling deliver, ActionMailer should yield back to mail to let it call :do_delivery on itself" do
+  test "calling deliver, ActionAI should yield back to mail to let it call :do_delivery on itself" do
     mail = Mail::Message.new
     assert_called(mail, :do_delivery) do
       assert_called(BaseMailer, :welcome, returns: mail) do
@@ -630,9 +630,9 @@ class BaseTest < ActiveSupport::TestCase
     assert_equal("Welcome from another path", mail.body.encoded)
   end
 
-  test "assets tags should use ActionMailer's asset_host settings" do
-    ActionMailer::Base.config.asset_host = "http://global.com"
-    ActionMailer::Base.config.assets_dir = "global/"
+  test "assets tags should use ActionAI's asset_host settings" do
+    ActionAI::Base.config.asset_host = "http://global.com"
+    ActionAI::Base.config.assets_dir = "global/"
 
     mail = AssetMailer.welcome
 
@@ -640,8 +640,8 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "assets tags should use a Mailer's asset_host settings when available" do
-    ActionMailer::Base.config.asset_host = "http://global.com"
-    ActionMailer::Base.config.assets_dir = "global/"
+    ActionAI::Base.config.asset_host = "http://global.com"
+    ActionAI::Base.config.assets_dir = "global/"
 
     TempAssetMailer = Class.new(AssetMailer) do
       self.mailer_name = "asset_mailer"
@@ -679,13 +679,13 @@ class BaseTest < ActiveSupport::TestCase
 
   test "you can register and unregister an observer to the mail object that gets informed on email delivery" do
     mail_side_effects do
-      ActionMailer::Base.register_observer(MyObserver)
+      ActionAI::Base.register_observer(MyObserver)
       mail = BaseMailer.welcome
       assert_called_with(MyObserver, :delivered_email, [mail]) do
         mail.deliver_now
       end
 
-      ActionMailer::Base.unregister_observer(MyObserver)
+      ActionAI::Base.unregister_observer(MyObserver)
       assert_not_called(MyObserver, :delivered_email, returns: mail) do
         mail.deliver_now
       end
@@ -694,13 +694,13 @@ class BaseTest < ActiveSupport::TestCase
 
   test "you can register and unregister an observer using its stringified name to the mail object that gets informed on email delivery" do
     mail_side_effects do
-      ActionMailer::Base.register_observer("BaseTest::MyObserver")
+      ActionAI::Base.register_observer("BaseTest::MyObserver")
       mail = BaseMailer.welcome
       assert_called_with(MyObserver, :delivered_email, [mail]) do
         mail.deliver_now
       end
 
-      ActionMailer::Base.unregister_observer("BaseTest::MyObserver")
+      ActionAI::Base.unregister_observer("BaseTest::MyObserver")
       assert_not_called(MyObserver, :delivered_email, returns: mail) do
         mail.deliver_now
       end
@@ -709,13 +709,13 @@ class BaseTest < ActiveSupport::TestCase
 
   test "you can register and unregister an observer using its symbolized underscored name to the mail object that gets informed on email delivery" do
     mail_side_effects do
-      ActionMailer::Base.register_observer(:"base_test/my_observer")
+      ActionAI::Base.register_observer(:"base_test/my_observer")
       mail = BaseMailer.welcome
       assert_called_with(MyObserver, :delivered_email, [mail]) do
         mail.deliver_now
       end
 
-      ActionMailer::Base.unregister_observer(:"base_test/my_observer")
+      ActionAI::Base.unregister_observer(:"base_test/my_observer")
       assert_not_called(MyObserver, :delivered_email, returns: mail) do
         mail.deliver_now
       end
@@ -724,7 +724,7 @@ class BaseTest < ActiveSupport::TestCase
 
   test "you can register and unregister multiple observers to the mail object that both get informed on email delivery" do
     mail_side_effects do
-      ActionMailer::Base.register_observers("BaseTest::MyObserver", MySecondObserver)
+      ActionAI::Base.register_observers("BaseTest::MyObserver", MySecondObserver)
       mail = BaseMailer.welcome
       assert_called_with(MyObserver, :delivered_email, [mail]) do
         assert_called_with(MySecondObserver, :delivered_email, [mail]) do
@@ -732,7 +732,7 @@ class BaseTest < ActiveSupport::TestCase
         end
       end
 
-      ActionMailer::Base.unregister_observers("BaseTest::MyObserver", MySecondObserver)
+      ActionAI::Base.unregister_observers("BaseTest::MyObserver", MySecondObserver)
       assert_not_called(MyObserver, :delivered_email, returns: mail) do
         mail.deliver_now
       end
@@ -754,13 +754,13 @@ class BaseTest < ActiveSupport::TestCase
 
   test "you can register and unregister an interceptor to the mail object that gets passed the mail object before delivery" do
     mail_side_effects do
-      ActionMailer::Base.register_interceptor(MyInterceptor)
+      ActionAI::Base.register_interceptor(MyInterceptor)
       mail = BaseMailer.welcome
       assert_called_with(MyInterceptor, :delivering_email, [mail]) do
         mail.deliver_now
       end
 
-      ActionMailer::Base.unregister_interceptor(MyInterceptor)
+      ActionAI::Base.unregister_interceptor(MyInterceptor)
       assert_not_called(MyInterceptor, :delivering_email, returns: mail) do
         mail.deliver_now
       end
@@ -769,13 +769,13 @@ class BaseTest < ActiveSupport::TestCase
 
   test "you can register and unregister an interceptor using its stringified name to the mail object that gets passed the mail object before delivery" do
     mail_side_effects do
-      ActionMailer::Base.register_interceptor("BaseTest::MyInterceptor")
+      ActionAI::Base.register_interceptor("BaseTest::MyInterceptor")
       mail = BaseMailer.welcome
       assert_called_with(MyInterceptor, :delivering_email, [mail]) do
         mail.deliver_now
       end
 
-      ActionMailer::Base.unregister_interceptor("BaseTest::MyInterceptor")
+      ActionAI::Base.unregister_interceptor("BaseTest::MyInterceptor")
       assert_not_called(MyInterceptor, :delivering_email, returns: mail) do
         mail.deliver_now
       end
@@ -784,13 +784,13 @@ class BaseTest < ActiveSupport::TestCase
 
   test "you can register and unregister an interceptor using its symbolized underscored name to the mail object that gets passed the mail object before delivery" do
     mail_side_effects do
-      ActionMailer::Base.register_interceptor(:"base_test/my_interceptor")
+      ActionAI::Base.register_interceptor(:"base_test/my_interceptor")
       mail = BaseMailer.welcome
       assert_called_with(MyInterceptor, :delivering_email, [mail]) do
         mail.deliver_now
       end
 
-      ActionMailer::Base.unregister_interceptor(:"base_test/my_interceptor")
+      ActionAI::Base.unregister_interceptor(:"base_test/my_interceptor")
       assert_not_called(MyInterceptor, :delivering_email, returns: mail) do
         mail.deliver_now
       end
@@ -799,7 +799,7 @@ class BaseTest < ActiveSupport::TestCase
 
   test "you can register and unregister multiple interceptors to the mail object that both get passed the mail object before delivery" do
     mail_side_effects do
-      ActionMailer::Base.register_interceptors("BaseTest::MyInterceptor", MySecondInterceptor)
+      ActionAI::Base.register_interceptors("BaseTest::MyInterceptor", MySecondInterceptor)
       mail = BaseMailer.welcome
       assert_called_with(MyInterceptor, :delivering_email, [mail]) do
         assert_called_with(MySecondInterceptor, :delivering_email, [mail]) do
@@ -807,7 +807,7 @@ class BaseTest < ActiveSupport::TestCase
         end
       end
 
-      ActionMailer::Base.unregister_interceptors("BaseTest::MyInterceptor", MySecondInterceptor)
+      ActionAI::Base.unregister_interceptors("BaseTest::MyInterceptor", MySecondInterceptor)
       assert_not_called(MyInterceptor, :delivering_email, returns: mail) do
         mail.deliver_now
       end
@@ -853,7 +853,7 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "modifying the mail message with a before_action" do
-    class BeforeActionMailer < ActionMailer::Base
+    class BeforeActionAI < ActionAI::Base
       before_action :add_special_header!
 
       def welcome ; mail ; end
@@ -864,11 +864,11 @@ class BaseTest < ActiveSupport::TestCase
         end
     end
 
-    assert_equal("Wow, so special", BeforeActionMailer.welcome["X-Special-Header"].to_s)
+    assert_equal("Wow, so special", BeforeActionAI.welcome["X-Special-Header"].to_s)
   end
 
   test "modifying the mail message with an after_action" do
-    class AfterActionMailer < ActionMailer::Base
+    class AfterActionAI < ActionAI::Base
       after_action :add_special_header!
 
       def welcome ; mail ; end
@@ -879,11 +879,11 @@ class BaseTest < ActiveSupport::TestCase
         end
     end
 
-    assert_equal("Testing", AfterActionMailer.welcome["X-Special-Header"].to_s)
+    assert_equal("Testing", AfterActionAI.welcome["X-Special-Header"].to_s)
   end
 
   test "adding an inline attachment using a before_action" do
-    class DefaultInlineAttachmentMailer < ActionMailer::Base
+    class DefaultInlineAttachmentMailer < ActionAI::Base
       before_action :add_inline_attachment!
 
       def welcome ; mail ; end
@@ -899,7 +899,7 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "action methods should be refreshed after defining new method" do
-    class FooMailer < ActionMailer::Base
+    class FooMailer < ActionAI::Base
       # This triggers action_methods.
       respond_to?(:foo)
 
@@ -911,7 +911,7 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "mailer can be anonymous" do
-    mailer = Class.new(ActionMailer::Base) do
+    mailer = Class.new(ActionAI::Base) do
       def welcome
         mail
       end
@@ -929,7 +929,7 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "default_from can be set" do
-    class DefaultFromMailer < ActionMailer::Base
+    class DefaultFromMailer < ActionAI::Base
       default to: "system@test.lindsaar.net"
       self.default_options = { from: "robert.pankowecki@gmail.com" }
 
@@ -942,7 +942,7 @@ class BaseTest < ActiveSupport::TestCase
   end
 
   test "mail() without arguments serves as getter for the current mail message" do
-    class MailerWithCallback < ActionMailer::Base
+    class MailerWithCallback < ActionAI::Base
       after_action :a_callback
 
       def welcome
@@ -965,16 +965,16 @@ class BaseTest < ActiveSupport::TestCase
   test "notification for process" do
     expected_payload = { mailer: "BaseMailer", action: :welcome, args: [{ body: "Hello there" }] }
 
-    assert_notifications_count("process.action_mailer", 1) do
-      assert_notification("process.action_mailer", expected_payload) do
+    assert_notifications_count("process.action_ai", 1) do
+      assert_notification("process.action_ai", expected_payload) do
         BaseMailer.welcome(body: "Hello there").deliver_now
       end
     end
   end
 
   test "notification for deliver" do
-    assert_notifications_count("deliver.action_mailer", 1) do
-      notification = assert_notification("deliver.action_mailer") do
+    assert_notifications_count("deliver.action_ai", 1) do
+      notification = assert_notification("deliver.action_ai") do
         BaseMailer.welcome(body: "Hello there").deliver_now
       end
 
@@ -1025,10 +1025,10 @@ end
 
 class BasePreviewInterceptorsTest < ActiveSupport::TestCase
   teardown do
-    ActionMailer::Base.preview_interceptors.clear
+    ActionAI::Base.preview_interceptors.clear
   end
 
-  class BaseMailerPreview < ActionMailer::Preview
+  class BaseMailerPreview < ActionAI::Preview
     def welcome
       BaseMailer.welcome
     end
@@ -1045,7 +1045,7 @@ class BasePreviewInterceptorsTest < ActiveSupport::TestCase
   end
 
   test "you can register and unregister a preview interceptor to the mail object that gets passed the mail object before previewing" do
-    ActionMailer::Base.register_preview_interceptor(MyInterceptor)
+    ActionAI::Base.register_preview_interceptor(MyInterceptor)
     mail = BaseMailer.welcome
     stub_any_instance(BaseMailerPreview) do |instance|
       instance.stub(:welcome, mail) do
@@ -1055,14 +1055,14 @@ class BasePreviewInterceptorsTest < ActiveSupport::TestCase
       end
     end
 
-    ActionMailer::Base.unregister_preview_interceptor(MyInterceptor)
+    ActionAI::Base.unregister_preview_interceptor(MyInterceptor)
     assert_not_called(MyInterceptor, :previewing_email, returns: mail) do
       BaseMailerPreview.call(:welcome)
     end
   end
 
   test "you can register and unregister a preview interceptor using its stringified name to the mail object that gets passed the mail object before previewing" do
-    ActionMailer::Base.register_preview_interceptor("BasePreviewInterceptorsTest::MyInterceptor")
+    ActionAI::Base.register_preview_interceptor("BasePreviewInterceptorsTest::MyInterceptor")
     mail = BaseMailer.welcome
     stub_any_instance(BaseMailerPreview) do |instance|
       instance.stub(:welcome, mail) do
@@ -1072,14 +1072,14 @@ class BasePreviewInterceptorsTest < ActiveSupport::TestCase
       end
     end
 
-    ActionMailer::Base.unregister_preview_interceptor("BasePreviewInterceptorsTest::MyInterceptor")
+    ActionAI::Base.unregister_preview_interceptor("BasePreviewInterceptorsTest::MyInterceptor")
     assert_not_called(MyInterceptor, :previewing_email, returns: mail) do
       BaseMailerPreview.call(:welcome)
     end
   end
 
   test "you can register and unregister a preview interceptor using its symbolized underscored name to the mail object that gets passed the mail object before previewing" do
-    ActionMailer::Base.register_preview_interceptor(:"base_preview_interceptors_test/my_interceptor")
+    ActionAI::Base.register_preview_interceptor(:"base_preview_interceptors_test/my_interceptor")
     mail = BaseMailer.welcome
     stub_any_instance(BaseMailerPreview) do |instance|
       instance.stub(:welcome, mail) do
@@ -1089,14 +1089,14 @@ class BasePreviewInterceptorsTest < ActiveSupport::TestCase
       end
     end
 
-    ActionMailer::Base.unregister_preview_interceptor(:"base_preview_interceptors_test/my_interceptor")
+    ActionAI::Base.unregister_preview_interceptor(:"base_preview_interceptors_test/my_interceptor")
     assert_not_called(MyInterceptor, :previewing_email, returns: mail) do
       BaseMailerPreview.call(:welcome)
     end
   end
 
   test "you can register and unregister multiple preview interceptors to the mail object that both get passed the mail object before previewing" do
-    ActionMailer::Base.register_preview_interceptors("BasePreviewInterceptorsTest::MyInterceptor", MySecondInterceptor)
+    ActionAI::Base.register_preview_interceptors("BasePreviewInterceptorsTest::MyInterceptor", MySecondInterceptor)
     mail = BaseMailer.welcome
     stub_any_instance(BaseMailerPreview) do |instance|
       instance.stub(:welcome, mail) do
@@ -1108,7 +1108,7 @@ class BasePreviewInterceptorsTest < ActiveSupport::TestCase
       end
     end
 
-    ActionMailer::Base.unregister_preview_interceptors("BasePreviewInterceptorsTest::MyInterceptor", MySecondInterceptor)
+    ActionAI::Base.unregister_preview_interceptors("BasePreviewInterceptorsTest::MyInterceptor", MySecondInterceptor)
     assert_not_called(MyInterceptor, :previewing_email, returns: mail) do
       BaseMailerPreview.call(:welcome)
     end
@@ -1119,25 +1119,25 @@ class BasePreviewInterceptorsTest < ActiveSupport::TestCase
 end
 
 class PreviewTest < ActiveSupport::TestCase
-  class A < ActionMailer::Preview; end
+  class A < ActionAI::Preview; end
 
   module B
-    class A < ActionMailer::Preview; end
-    class C < ActionMailer::Preview; end
+    class A < ActionAI::Preview; end
+    class C < ActionAI::Preview; end
   end
 
-  class C < ActionMailer::Preview; end
+  class C < ActionAI::Preview; end
 
   test "all() returns mailers in alphabetical order" do
-    ActionMailer::Preview.stub(:descendants, [C, A, B::C, B::A]) do
-      mailers = ActionMailer::Preview.all
+    ActionAI::Preview.stub(:descendants, [C, A, B::C, B::A]) do
+      mailers = ActionAI::Preview.all
       assert_equal [A, B::A, B::C, C], mailers
     end
   end
 end
 
 class BasePreviewTest < ActiveSupport::TestCase
-  class BaseMailerPreview < ActionMailer::Preview
+  class BaseMailerPreview < ActionAI::Preview
     def welcome
       BaseMailer.welcome(params)
     end

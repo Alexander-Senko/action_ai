@@ -3,7 +3,7 @@
 require "abstract_unit"
 require "action_controller"
 
-class AssetHostMailer < ActionMailer::Base
+class AssetHostMailer < ActionAI::Base
   def email_with_asset
     mail to: "test@localhost",
       subject: "testing email containing asset path while asset_host is set",
@@ -11,7 +11,7 @@ class AssetHostMailer < ActionMailer::Base
   end
 end
 
-class AssetHostTest < ActionMailer::TestCase
+class AssetHostTest < ActionAI::TestCase
   def setup
     AssetHostMailer.configure do |c|
       c.asset_host = "http://www.example.com"

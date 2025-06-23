@@ -2,7 +2,7 @@
 
 require "tmpdir"
 
-module ActionMailer
+module ActionAI
   # = Action Mailer \DeliveryMethods
   #
   # This module handles everything related to mail delivery, from registering
