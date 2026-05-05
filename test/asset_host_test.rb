@@ -5,7 +5,6 @@ require "action_controller"
 
 class AssetHostAgent < ActionAI::Agent
   def prompt_with_asset
-    ask
   end
 end
 

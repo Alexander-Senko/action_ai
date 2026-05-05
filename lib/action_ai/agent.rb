@@ -278,6 +278,7 @@ module ActionAI
   #   <tt>execution_job</tt>. Agents can set this to use a custom queue name.
   class Agent < AbstractController::Base
     include Callbacks
+    include ImplicitInteraction
     include QueuedExecution
     include Rescuable
     include Parameterized

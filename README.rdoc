@@ -16,6 +16,8 @@ shape for AI interactions rather than building an unrelated API from scratch.
 
 The framework works by initializing any instance variables you want to be
 available in the prompt template.
+Like +render+ in Action Controller, the implicit +ask+ will be triggered
+automatically at the end of the action unless you have already called it.
 
 This can be as simple as:
 
@@ -25,8 +27,14 @@ This can be as simple as:
     def code(task, language)
       @task     = task
       @language = language
-      ask
     end
+  end
+
+If you need to customize the prompt execution (e.g., pass options or a custom prompt),
+you can call +ask+ explicitly:
+
+  def run(spec_file)
+    ask "Run the attached spec", with: spec_file
   end
 
 After the action method completes, the framework will automatically:

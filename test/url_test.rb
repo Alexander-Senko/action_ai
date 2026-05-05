@@ -27,13 +27,11 @@ class UrlTestAgent < ActionAI::Agent
   def signed_up_with_url(recipient)
     @recipient   = recipient
     @welcome_url = url_for host: "example.com", controller: "welcome", action: "greeting"
-    ask
   end
 
   def exercise_url_for(options)
     @options = options
     @url = url_for(@options)
-    ask
   end
 end
 

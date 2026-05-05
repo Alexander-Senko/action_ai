@@ -65,7 +65,9 @@ class ActionAICallbacksTest < ActiveSupport::TestCase
 
     stub_any_instance(CallbackAgent, instance: CallbackAgent.new) do |instance|
       instance.stub(:message, proc { raise "boom execution exception" }) do
-        CallbackAgent.test_message.run
+        instance.stub(:performed?, true) do
+          CallbackAgent.test_message.run
+        end
       end
     end
 

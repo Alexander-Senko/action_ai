@@ -48,6 +48,7 @@ module ActionAI
   autoload :TestCase
   autoload :TestHelper
   autoload :Interaction
+  autoload :ImplicitInteraction
   autoload :ExecutionJob
   autoload :QueuedExecution
 

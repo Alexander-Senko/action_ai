@@ -166,7 +166,6 @@ class AgentTest < ActiveSupport::TestCase
       respond_to?(:foo)
 
       def notify
-        ask
       end
     end
 
@@ -176,7 +175,6 @@ class AgentTest < ActiveSupport::TestCase
   test "agent can be anonymous" do
     agent = Class.new(ActionAI::Agent) do
       def welcome
-        ask
       end
     end
 

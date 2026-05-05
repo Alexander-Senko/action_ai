@@ -4,7 +4,6 @@ require "abstract_unit"
 
 class AutoLayoutAgent < ActionAI::Agent
   def hello
-    ask
   end
 
   def spam
@@ -22,11 +21,9 @@ class ExplicitLayoutAgent < ActionAI::Agent
   layout "spam", except: [:logout]
 
   def signup
-    ask
   end
 
   def logout
-    ask
   end
 end
 

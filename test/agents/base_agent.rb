@@ -4,16 +4,13 @@ class BaseAgent < ActionAI::Agent
   self.agent_name = "base_agent"
 
   def welcome
-    ask
   end
 
   def attachment_with_content(hash = {})
     attachments << __FILE__
-    ask
   end
 
   def implicit_with_locale(hash = {})
-    ask
   end
 
   def explicit_different_template(template_name = "")

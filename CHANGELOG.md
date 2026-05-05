@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - UNRELEASED
+
+### Added
+
+- Implicit `ask` behavior for AI actions without explicit prompts, matching Action Controller-style ergonomics.
+
 ## [0.1.0] - 2026-05-05
 
 Refactored from Action Mailer.
