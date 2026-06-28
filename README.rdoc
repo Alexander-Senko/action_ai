@@ -72,6 +72,22 @@ Or you can just chain the methods together like:
 
   Generator.code("Parse CSV and dedupe", :ruby).content  # Returns AI's response for the prompt
 
+You can also chain multiple agent actions to compose a small workflow before reading the final response:
+
+  class WorkflowAgent < ApplicationAI
+    def collect(topic)
+      @topic = topic
+      ask "Collect #{@topic}"
+    end
+
+    def refine(style:)
+      ask "Refine #{@topic} as #{style}"
+    end
+  end
+
+  WorkflowAgent.collect("release notes").refine(style: "bullet list").content
+  # => collected release notes refined as bullet list
+
 == Setting defaults
 
 It is possible to set default values that will be used in every method in your

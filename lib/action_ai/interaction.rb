@@ -77,6 +77,23 @@ module ActionAI
     #   end
     def later(...) = enqueue_execution(...)
 
+    ruby2_keywords def method_missing(method, *args, &)
+      case method.name
+      when *@agent_class.action_methods
+        processed_agent.process(@action = method, *(@args = args), &)
+        self
+      else
+        super
+      end
+    end
+
+    def respond_to_missing?(method, include_private = false)
+      [
+        method.name.in?(@agent_class.action_methods),
+        super,
+      ].any?
+    end
+
     private
       # Returns the processed Agent instance. We keep this instance
       # on hand so we can run callbacks and delegate exception handling to it.

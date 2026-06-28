@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Implicit `ask` behavior for AI actions without explicit prompts, matching Action Controller-style ergonomics.
+- Action chaining, enabling users to construct complex AI workflows from discrete jobs.
 
 ### Fixed
 

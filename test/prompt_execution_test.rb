@@ -7,6 +7,29 @@ require "agents/delayed_agent"
 class PromptExecutionTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
+  class WorkflowAgent < ActionAI::Agent
+    def collect(topic)
+      @topic = topic
+      ask "Collect #{@topic}"
+    end
+
+    def refine(style:)
+      ask "Refine #{@topic} as #{style}"
+    end
+
+    def analyze
+      ask message.content.sub(/\A(\w+)e?/) { "Analyze #{it.downcase}ed" }
+    end
+
+    def stats
+      stats = chat.messages
+        .group_by(&:role)
+        .transform_values(&:size)
+
+      ask "Made #{stats[:user]} requests, got #{stats[:assistant]} responses"
+    end
+  end
+
   setup do
     @previous_logger = ActiveJob::Base.logger
 
@@ -157,6 +180,55 @@ class PromptExecutionTest < ActiveSupport::TestCase
     assert_performed_with(job: ActionAI::ExecutionJob, args: ["DelayedAgent", "test_kwargs", args: [argument: 1]]) do
       DelayedAgent.test_kwargs(argument: 1)
         .later
+    end
+  end
+
+  test "supports chaining actions for workflow-style execution" do
+    response = WorkflowAgent
+      .collect("release notes")
+      .refine(style: "bullet list")
+      .content
+
+    assert_equal "Refine release notes as bullet list", response
+  end
+
+  test "chained actions can read the previous AI response" do
+    response = WorkflowAgent
+      .collect("release notes")
+      .analyze
+      .content
+
+    assert_equal "Analyze collected release notes", response
+  end
+
+  test "chained actions share the same AI chat" do
+    response = WorkflowAgent
+      .collect("release notes")
+      .refine(style: "table")
+      .analyze
+      .stats
+      .content
+
+    assert_equal "Made 3 requests, got 3 responses", response
+  end
+
+  test "respond_to? includes workflow actions through respond_to_missing?" do
+    interaction = WorkflowAgent.collect("Bug triage")
+
+    assert_respond_to     interaction, :refine
+    assert_not_respond_to interaction, :unknown_step
+  end
+
+  test "method lookup for workflow actions works through respond_to_missing?" do
+    interaction = WorkflowAgent.collect("Bug triage")
+
+    assert_equal Method, interaction.method(:refine).class
+    assert_raises(NameError) { interaction.method(:unknown_step) }
+  end
+
+  test "raises when chaining to an unknown workflow action" do
+    assert_raises(NoMethodError) do
+      WorkflowAgent.collect("Bug triage").unknown_step
     end
   end
 end
