@@ -33,6 +33,18 @@ module RubyLLM
       assert_equal "Content", content
     end
 
+    test "complete echoes only messages after the last assistant reply" do
+      response = provider.complete([
+        MessageStub.new(:user,      "One"),
+        MessageStub.new(:assistant, "One"),
+        MessageStub.new(:system,    "Instructions"),
+        MessageStub.new(:user,      "Two"),
+        MessageStub.new(:user,      "Three"),
+      ], model:)
+
+      assert_equal "Instructions\n\nTwo\n\nThree", response.content
+    end
+
     test "complete raises when model response handler does not exist" do
       model = ModelStub.new("unknown")
 

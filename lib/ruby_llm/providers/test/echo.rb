@@ -26,7 +26,10 @@ module RubyLLM
       private
 
       def echo_response(messages, **) = {
-        content: RubyLLM.concat_content(messages.map(&:content)),
+        content: RubyLLM.concat_content(messages
+                     .reverse_each.take_while { it.role != :assistant }.reverse
+                     .map(&:content)
+                 ),
       }
     end
   end

@@ -37,6 +37,16 @@ module RubyLLM
       assert_equal %w[One Two], Tester.interactions.map(&:content)
     end
 
+    test "handles multiple interactions in the same chat" do
+      chat = RubyLLM.chat
+
+      response_1 = chat.say "One"
+      response_2 = chat.say "Two"
+
+      assert_equal "One", response_1.content
+      assert_equal "Two", response_2.content
+    end
+
     test "can reset captured interactions" do
       RubyLLM.chat.say "One"
       assert_equal 1, Tester.interactions.size
