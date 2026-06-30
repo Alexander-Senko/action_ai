@@ -40,9 +40,9 @@ class AgentTest < ActiveSupport::TestCase
 
   # Attachments
   test "attachment with content" do
-    response = BaseAgent.attachment_with_content.content
-    assert_equal(1, response.attachments.length)
-    assert_equal("base_agent.rb", response.attachments[0].filename)
+    attachments = BaseAgent.attachment_with_content.attachments
+    assert_equal(1, attachments.length)
+    assert_equal("base_agent.rb", attachments[0].filename)
   end
 
   test "translations are scoped properly" do
@@ -124,7 +124,7 @@ class AgentTest < ActiveSupport::TestCase
   test "proc default values are not evaluated when overridden" do
     with_default BaseAgent, model: -> { flunk } do
       response = ProcAgent.welcome
-      assert_equal "echo", response.model_id
+      assert_equal "echo", response.model
     end
   end
 

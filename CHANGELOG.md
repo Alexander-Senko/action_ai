@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - UNRELEASED
+
+### Changed
+
+- Moved to edge RubyLLM.
+- Dropped `echo` test model in favor of `echo` protocol.
+
+
 ## [0.2.0] - 2026-06-30
 
 ### Added

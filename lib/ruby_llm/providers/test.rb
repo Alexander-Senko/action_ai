@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "ruby_llm"
+require "ruby_llm/protocols/echo"
 
 module RubyLLM
   module Providers
@@ -8,33 +9,16 @@ module RubyLLM
     #
     # This provider mirrors the behavior of a local fake adapter:
     # - it does not initialize any remote connections,
-    # - it returns deterministic responses based on model-specific helpers
-    #   (for example, `echo_response` from `Test::Echo`).
+    # - it returns deterministic responses through `echo` protocol.
     class Test < Provider
-      autoload :Echo, "ruby_llm/providers/test/echo"
-
-      include Echo
+      protocol :echo, Protocols::Echo
 
       def self.local? = true
 
-      def initialize(...)
-        # configuration not needed
+      def initialize(config)
+        @config = config
         # skip any connections
       end
-
-      def complete(messages, model:, **)
-        Message.new(
-          role:     :assistant,
-          model_id: model.id,
-
-          **send("#{model.id}_response", messages)
-        ).tap do |message|
-          yield message.content if block_given?
-        end
-      end
-
-      def list_models = [Echo]
-          .map(&:info)
     end
   end
 end

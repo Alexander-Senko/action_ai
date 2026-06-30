@@ -32,3 +32,7 @@ group :doc do
 	gem "rouge"
 	gem "rubyzip", "~> 2.0"
 end
+
+# Edge libraries
+
+gem "ruby_llm", github: "crmne/ruby_llm"

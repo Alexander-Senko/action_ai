@@ -28,7 +28,7 @@
 ## Integration points
 - Rails integration is in `lib/action_ai/railtie.rb`: URL helpers, preview paths, config propagation, and inclusion of `ActionAI::TestHelper` in integration tests.
 - Preview system is `ActionAI::Preview` (`lib/action_ai/preview.rb`), loading `*_preview.rb` from configured preview paths.
-- Runtime dependency boundary is `ruby_llm`; tests often use `ruby_llm/tester` with `model: "echo"` (see `test/agents/base_agent.rb`) to avoid real provider calls.
+- Runtime dependency boundary is `ruby_llm`; tests use `ruby_llm/tester` (see `test/agents/base_agent.rb`) to avoid real provider calls.
 
 ## Developer workflow (validated here)
 - Run full suite: `bundle exec rake test`
