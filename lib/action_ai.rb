@@ -27,6 +27,8 @@ require "abstract_controller"
 require "action_ai/version"
 require "action_ai/deprecator"
 
+require "ruby_llm"
+
 # Common Active Support usage in Action AI
 require "active_support"
 require "active_support/rails"

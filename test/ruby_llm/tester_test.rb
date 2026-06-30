@@ -4,10 +4,6 @@ require "abstract_unit"
 require "ruby_llm/tester"
 
 module RubyLLM
-  configure do
-    it.default_model = "echo"
-  end
-
   class TesterTest < ActiveSupport::TestCase
     setup do
       Tester.interactions.clear

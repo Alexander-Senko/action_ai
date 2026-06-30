@@ -18,7 +18,7 @@ module RubyLLM
   #   RubyLLM::Tester.interactions.last.role    # => :user
   #   RubyLLM::Tester.interactions.last.content # => "Hello!"
   #
-  # The test provider uses an +echo+ model and returns the prompt content back as
+  # The test provider uses an +echo+ protocol and returns the prompt content as
   # the assistant response, so assertions stay deterministic and offline.
   module Tester
     mattr_reader :interactions, default: []
@@ -28,7 +28,7 @@ module RubyLLM
     end
   end
 
-  Provider.register :test, Class.new(Providers::Test) {
+  Protocols::Echo.prepend Module.new {
     def complete(messages, ...)
       Tester.register messages
 
@@ -36,5 +36,9 @@ module RubyLLM
     end
   }
 
-  models.refresh!
+  Provider.register :test, Providers::Test
+
+  configure do |config|
+    config.model_registry_file = "test/models.json"
+  end
 end
