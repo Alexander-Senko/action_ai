@@ -173,6 +173,20 @@ return type. Action AI will:
   result.parsed   # => {"name" => "Alice", "age" => 30}
   result.object   # => #<Person name="Alice" age=30>
 
+Pass the class wrapped in an array to declare an array return type:
+
+  class Extractor < ApplicationAI
+    def people(text)
+      @text = text
+      returns [Person]
+    end
+  end
+
+  result = Extractor.people("Alice is 30 and Bob is 25")
+  result.content  # => '[{"name":"Alice","age":30},{"name":"Bob","age":25}]'
+  result.parsed   # => [{"name" => "Alice", "age" => 30}, {"name" => "Bob", "age" => 25}]
+  result.object   # => [#<Person name="Alice" age=30>, #<Person name="Bob" age=25>]
+
 The schema is built from the model's declared attributes and cached.
 
 

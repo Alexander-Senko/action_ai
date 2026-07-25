@@ -74,6 +74,16 @@ class SchemaTest < ActiveSupport::TestCase
       returns PersonRecord
       ask json_text
     end
+
+    def extract_model_array(json_text)
+      returns [PersonModel]
+      ask json_text
+    end
+
+    def extract_record_array(json_text)
+      returns [PersonRecord]
+      ask json_text
+    end
   end
 
   def self.run_suite(...)
@@ -312,6 +322,33 @@ class SchemaTest < ActiveSupport::TestCase
     assert_equal "Alice", record.object.name
     assert_equal 30,      model .object.age
     assert_equal 30,      record.object.age
+  end
+
+  test "#returns accepts an array to declare an array return type" do
+    model  = PersonAgent.extract_model_array  '[{"name":"Alice","age":30},{"name":"Bob","age":25}]'
+    record = PersonAgent.extract_record_array '[{"name":"Alice","age":30},{"name":"Bob","age":25}]'
+    assert_respond_to model,  :object
+    assert_respond_to record, :object
+  end
+
+  test "#object returns an array of model instances for array return type" do
+    model  = PersonAgent.extract_model_array  '[{"name":"Alice","age":30},{"name":"Bob","age":25}]'
+    record = PersonAgent.extract_record_array '[{"name":"Alice","age":30},{"name":"Bob","age":25}]'
+    assert_instance_of Array, model .object
+    assert_instance_of Array, record.object
+    assert_instance_of PersonModel,  model .object.first
+    assert_instance_of PersonRecord, record.object.first
+  end
+
+  test "#object array has the correct attributes" do
+    model  = PersonAgent.extract_model_array  '[{"name":"Alice","age":30},{"name":"Bob","age":25}]'
+    record = PersonAgent.extract_record_array '[{"name":"Alice","age":30},{"name":"Bob","age":25}]'
+    assert_equal 2,       model .object.size
+    assert_equal 2,       record.object.size
+    assert_equal "Alice", model .object.first.name
+    assert_equal "Alice", record.object.first.name
+    assert_equal "Bob",   model .object.last.name
+    assert_equal "Bob",   record.object.last.name
   end
 
   private
