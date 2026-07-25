@@ -117,6 +117,65 @@ The Agent class has the full list of configuration options. Here's an example:
   }
 
 
+== Structured output (data schemas)
+
+Action AI can instruct the model to return structured JSON that maps directly
+to an ActiveModel model. Two features cooperate to make this work:
+
+=== +.schema+ on ActiveModel models
+
+Any model that includes +ActiveModel::API+ automatically gains a +.schema+
+class method that returns a +Schematist::Schema+ instance derived from the model's
+attribute types.
+
+  class Person
+    include ActiveModel::Model
+    include ActiveModel::Attributes
+
+    attribute :name,  :string
+    attribute :age,   :integer
+    attribute :score, :float
+  end
+
+  Person.schema                         # => a Schematist::Schema instance
+  Person.schema.new.to_json_schema      # => {name: "Person", schema: {...}}
+
+Supported type mappings:
+
+* +:string+, +:immutable_string+, +:text+ → JSON +string+
+* +:integer+, +:big_integer+ → JSON +integer+
+* +:float+, +:decimal+, +:big_decimal+ → JSON +number+
+* +:boolean+ → JSON +boolean+
+* +:date+, +:datetime+, +:time+ → JSON +string+ with +format+ set to
+  +"date"+, +"date-time"+, or +"time"+ respectively
+* +:binary+ → JSON +string+ with +contentEncoding+ set to +"base64"+
+
+Other types are not included in the schema.
+
+=== +returns+ in agent actions
+
+Call +returns ModelClass+ inside an action method to declare the expected
+return type. Action AI will:
+
+1. Configure the chat to request output matching the model's JSON schema
+   (+chat.with_schema ModelClass.schema+).
+2. Decorate the resulting +RubyLLM::Message+ with +#object+ (a model instance).
+
+  class Extractor < ApplicationAI
+    def person(text)
+      @text = text
+      returns Person
+    end
+  end
+
+  result = Extractor.person("Alice is 30 years old")
+  result.content  # => '{"name":"Alice","age":30}'
+  result.parsed   # => {"name" => "Alice", "age" => 30}
+  result.object   # => #<Person name="Alice" age=30>
+
+The schema is built from the model's declared attributes and cached.
+
+
 == Download and installation
 
 The latest version of Action AI can be installed with RubyGems:
