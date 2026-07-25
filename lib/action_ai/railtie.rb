@@ -19,6 +19,12 @@ module ActionAI
       ActiveSupport.on_load(:action_ai) { self.logger ||= Rails.logger }
     end
 
+    initializer "action_ai.active_model_schema" do
+      Rails.application.config.to_prepare do
+        ActiveModel::API.include ModelSchema if defined? ActiveModel
+      end
+    end
+
     initializer "action_ai.set_configs" do |app|
       paths   = app.config.paths
       options = app.config.action_ai

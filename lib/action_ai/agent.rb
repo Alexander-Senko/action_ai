@@ -412,8 +412,41 @@ module ActionAI
     #
     #   ask("Write Ruby code for the following task: #{task}")
     #
-    def ask(prompt = self.prompt, with: use_attachments, &)
-      @_message = chat.ask(prompt, with:, &)
+    def ask(prompt = self.prompt, with: use_attachments, as: @model_class, &)
+      @_message = chat.ask(prompt, with:, &)&.tap do |message|
+        if as
+          object = message.parsed&.then { as.new it }
+          message.define_singleton_method(:object) { object }
+        end
+      end
+    end
+
+    # Declares the structured return type for this action. Configures the chat
+    # to request output matching the model's schema, and decorates the resulting
+    # +RubyLLM::Message+ with +#object+ accessor.
+    #
+    # Call +returns+ inside an action method before +ask+ (or before the
+    # implicit ask) to indicate which ActiveModel class the LLM should fill in:
+    #
+    #   class Extractor < ApplicationAI
+    #     def person(text)
+    #       @text = text
+    #       returns Person
+    #     end
+    #   end
+    #
+    # After execution:
+    #
+    #   response = Extractor.person("Alice is 30 years old")
+    #   response.content # => '{"name":"Alice","age":30}'
+    #   response.parsed  # => {"name" => "Alice", "age" => 30}
+    #   response.object  # => #<Person name="Alice" age=30>
+    #
+    # The +model_class+ must respond to +.schema+, which is automatically
+    # available on any model that includes +ActiveModel::Attributes+.
+    def returns(model_class)
+      @model_class = model_class
+      chat.with_schema(model_class.schema)
     end
 
     private

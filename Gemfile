@@ -9,6 +9,9 @@ gem "minitest-mock"
 gem "rake"
 
 gem "railties"
+gem "activemodel"
+gem "activerecord"
+gem "sqlite3"
 
 group :rubocop do
 	# Rubocop has to be locked in the Gemfile because CI ignores Gemfile.lock
