@@ -2,12 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+
 ## [0.3.0] - UNRELEASED
 
 ### Changed
 
 - Moved to edge RubyLLM.
 - Dropped `echo` test model in favor of `echo` protocol.
+
+### Added
+
+- `.schema` class method on any `ActiveModel::API` model, returning a cached `Schematist::Schema` instance derived from the model’s attribute types.
+- `#returns(ModelClass)` instance method in agent actions: configures structured output via `chat.with_schema` and decorates the resulting `RubyLLM::Message` with `#object` (a model instance) accessor.
 
 
 ## [0.2.0] - 2026-06-30
@@ -20,6 +26,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - `echo` test model to support multiple chat interactions.
+
 
 ## [0.1.0] - 2026-05-05
 
