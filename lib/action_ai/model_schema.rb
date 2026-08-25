@@ -2,6 +2,7 @@
 
 require "schematist"
 require "active_support/concern"
+require "action_ai/schema"
 require "action_ai/refinements/numeric"
 
 module ActionAI
@@ -85,7 +86,10 @@ module ActionAI
       # not actively enforced. In particular, +multiple_of+ is accepted by the
       # schema generator here for JSON Schema output, even though
       # +ActiveModel::Validations::NumericalityValidator+ ignores it at runtime.
-      memoize def schema = build_schema
+      memoize def schema = find_schema || build_schema
+
+      def find_schema = Schema.for(self)
+          &.new
 
       def build_schema
         attributes = schema_attributes

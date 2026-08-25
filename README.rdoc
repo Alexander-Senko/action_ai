@@ -189,6 +189,26 @@ Pass the class wrapped in an array to declare an array return type:
 
 The schema is built from the model's declared attributes and cached.
 
+=== Custom schemas
+
+If an inferred schema is not sufficient, define a +Schematist::Schema+
+subclass under +app/schemas+ with the model's full class name followed by
++Schema+. Custom schemas are looked up first; models without a matching class
+continue to use the inferred schema.
+
+  # app/schemas/person_schema.rb
+  class PersonSchema < ActionAI::Schema
+    string :name
+    integer :age, minimum: 0
+  end
+
+For namespaced models, mirror the namespace in +app/schemas+:
+
+  # app/schemas/admin/person_schema.rb
+  class Admin::PersonSchema < ActionAI::Schema
+    string :name
+  end
+
 
 == Download and installation
 
