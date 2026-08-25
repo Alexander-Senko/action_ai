@@ -41,6 +41,7 @@ module ActionAI
 
   autoload :Agent
   autoload :Callbacks
+  autoload :Schema
   autoload :ModelSchema
   autoload :PromptHelper
   autoload :Parameterized

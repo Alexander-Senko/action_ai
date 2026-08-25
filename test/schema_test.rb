@@ -63,6 +63,17 @@ class SchemaTest < ActiveSupport::TestCase
     validates :status,  inclusion: { in: ["complete"] }
   end
 
+  class CustomModel
+    include ::ActiveModel::Model
+    include ::ActiveModel::Attributes
+
+    attribute :name, :string
+  end
+
+  class CustomSchema < ActionAI::Schema
+    string :name, min_length: 10
+  end
+
   # An agent that uses +returns+ to get structured output
   class PersonAgent < ActionAI::Agent
     def extract_model(json_text)
@@ -134,6 +145,11 @@ class SchemaTest < ActiveSupport::TestCase
 
   test ".schema is cached" do
     assert_same PersonModel.schema, PersonModel.schema
+  end
+
+  test "custom schema is looked up before inference" do
+    assert_instance_of CustomSchema, CustomModel.schema
+    assert_equal 10, schema_property(CustomModel, :name)[:minLength]
   end
 
   test "ActiveModel .schema includes string attributes" do

@@ -34,6 +34,7 @@ Gem::Specification.new do |s|
   s.add_dependency "activejob"
 
   s.add_dependency "ruby_llm"
+  s.add_dependency "magic-lookup"
   s.add_dependency "memery"
   s.add_dependency "rails-dom-testing", "~> 2.2"
 end
