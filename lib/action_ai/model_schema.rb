@@ -33,6 +33,7 @@ module ActionAI
   # Other types are omitted from the schema.
   module ModelSchema
     extend ActiveSupport::Concern
+    extend Schematist::Helpers
 
     autoload :ActiveModel,  "action_ai/model_schema/active_model"
     autoload :ActiveRecord, "action_ai/model_schema/active_record"
@@ -70,8 +71,10 @@ module ActionAI
       base.include ActiveRecord if defined? ::ActiveRecord and base <= ::ActiveRecord::Base
     end
 
+    def self.new(...) = schema(...)
+
     class_methods do
-      include Schematist::Helpers
+      include Memery
       using   ActionAI::Refinements::Numeric
 
       # Returns a cached +Schematist::Schema+ instance derived from this
@@ -82,10 +85,12 @@ module ActionAI
       # not actively enforced. In particular, +multiple_of+ is accepted by the
       # schema generator here for JSON Schema output, even though
       # +ActiveModel::Validations::NumericalityValidator+ ignores it at runtime.
-      def schema
+      memoize def schema = build_schema
+
+      def build_schema
         attributes = schema_attributes
 
-        @schema ||= super schema_name, **{
+        ModelSchema.new schema_name, **{
           description: try(:model_name)&.human,
         } do
           attributes.each do |name, options|
@@ -94,35 +99,33 @@ module ActionAI
         end
       end
 
-      def to_json_schema = @json_schema ||= schema.to_json_schema
-          .with_indifferent_access
+      memoize def to_json_schema = schema.to_json_schema
+        .with_indifferent_access
 
       private
 
       def schema_name = "#{name}Schema"
 
-      def schema_attributes
-        @schema_attributes ||= attribute_types
-            .symbolize_keys
-            .transform_values(&:type)
-            .filter_map do |name, type|
-              [ name, {
-                type:             (TYPES[type] or next),
-                format:           FORMATS[type],
-                content_encoding: ENCODINGS[type],
-                description:      try(:human_attribute_name, name),
-                required:         attribute_required?(name),
-                default:          attribute_default(name),
-                enum:             attribute_enum(name),
-                const:            attribute_const(name),
-                pattern:          attribute_format(name),
+      memoize def schema_attributes = attribute_types
+          .symbolize_keys
+          .transform_values(&:type)
+          .filter_map { |name, type|
+            [ name, {
+              type:             (TYPES[type] or next),
+              format:           FORMATS[type],
+              content_encoding: ENCODINGS[type],
+              description:      try(:human_attribute_name, name),
+              required:         attribute_required?(name),
+              default:          attribute_default(name),
+              enum:             attribute_enum(name),
+              const:            attribute_const(name),
+              pattern:          attribute_format(name),
 
-                **attribute_length(name),
-                **attribute_boundaries(name),
-              }.compact! ]
-            end
-            .to_h
-      end
+              **attribute_length(name),
+              **attribute_boundaries(name),
+            }.compact! ]
+          }
+          .to_h
 
       def attribute_types = raise NotImplementedError
 
@@ -182,7 +185,7 @@ module ActionAI
             }
           end
 
-      def default_instance = @default_instance ||= new
+      memoize def default_instance = new
     end
   end
 end

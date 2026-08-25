@@ -42,7 +42,9 @@ module RubyLLM
       assert_equal "Instructions\n\nTwo\n\nThree", response.content
     end
 
-    def provider = @provider ||= Providers::Test.new(RubyLLM.config)
-    def model    = @model    ||= RubyLLM.models.find("echo")
+    include Memery
+
+    memoize def provider = Providers::Test.new(RubyLLM.config)
+    memoize def model    = RubyLLM.models.find("echo")
   end
 end
