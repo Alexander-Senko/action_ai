@@ -19,10 +19,8 @@ module ActionAI
       ActiveSupport.on_load(:action_ai) { self.logger ||= Rails.logger }
     end
 
-    initializer "action_ai.active_model_schema" do
-      Rails.application.config.to_prepare do
-        ActiveModel::API.include ModelSchema if defined? ActiveModel
-      end
+    initializer "action_ai.active_model_schema", before: :eager_load! do
+      ActiveModel::API.include ModelSchema if defined? ActiveModel
     end
 
     initializer "action_ai.set_configs" do |app|

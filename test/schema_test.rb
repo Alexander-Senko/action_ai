@@ -12,8 +12,8 @@ ActiveModel::API.include ActionAI::ModelSchema
 class SchemaTest < ActiveSupport::TestCase
   # A simple ActiveModel model used for schema tests
   class PersonModel
-    include ::ActiveModel::Model
-    include ::ActiveModel::Attributes
+    include ActiveModel::Model
+    include ActiveModel::Attributes
 
     attribute :name,     :string
     attribute :active,   :boolean, default: true
@@ -68,13 +68,13 @@ class SchemaTest < ActiveSupport::TestCase
   end
 
   class Response
-    include ::ActiveModel::Model
-    include ::ActiveModel::Attributes
+    include ActiveModel::Model
+    include ActiveModel::Attributes
 
     attribute :code,        :immutable_string
     attribute :message,     :immutable_string
     attribute :status,      :immutable_string
-    attribute :unsupported, ::ActiveModel::Type::Value.new
+    attribute :unsupported, ActiveModel::Type::Value.new
 
     validates :code,    length: { is: 3 }
     validates :message, format: { without: /error|failed/ }
@@ -82,8 +82,8 @@ class SchemaTest < ActiveSupport::TestCase
   end
 
   class CustomModel
-    include ::ActiveModel::Model
-    include ::ActiveModel::Attributes
+    include ActiveModel::Model
+    include ActiveModel::Attributes
 
     attribute :name, :string
   end

@@ -36,8 +36,10 @@ module ActionAI
     extend ActiveSupport::Concern
     extend Schematist::Helpers
 
-    autoload :ActiveModel,  "action_ai/model_schema/active_model"
-    autoload :ActiveRecord, "action_ai/model_schema/active_record"
+    module Inference
+      autoload :ActiveModel,  "action_ai/model_schema/active_model"
+      autoload :ActiveRecord, "action_ai/model_schema/active_record"
+    end
 
     TYPES = {
       string:           :string,
@@ -65,18 +67,16 @@ module ActionAI
       binary: "base64",
     }.freeze
 
-    def self.included base
-      super
-
-      base.include ActiveModel  if defined? ::ActiveModel  and base <= ::ActiveModel::API
-      base.include ActiveRecord if defined? ::ActiveRecord and base <= ::ActiveRecord::Base
+    included do
+      extend Inference::ActiveModel  if defined? ActiveModel  and self <= ActiveModel::Validations
+      extend Inference::ActiveRecord if defined? ActiveRecord and self <= ActiveRecord::Base
     end
 
     def self.new(...) = schema(...)
 
     class_methods do
       include Memery
-      using   ActionAI::Refinements::Numeric
+      using   Refinements::Numeric
 
       # Returns a cached +Schematist::Schema+ instance derived from this
       # model's attribute types.

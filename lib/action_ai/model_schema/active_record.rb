@@ -1,19 +1,17 @@
 # frozen_string_literal: true
 
-module ActionAI::ModelSchema
-  # Extends schema inference with Active Record–specific behavior.
-  #
-  # Overrides the base inference methods to incorporate database column
-  # metadata (nullability, defaults, limits, decimal scale) and model-level
-  # features (defined enums, STI inheritance).
-  #
-  # Unlike the Active Model inference, which relies solely on validation
-  # declarations, this module reads the actual column schema to produce
-  # more precise constraints.
-  module ActiveRecord
-    extend ActiveSupport::Concern
-
-    class_methods do
+module ActionAI
+  module ModelSchema
+    # Extends schema inference with Active Record–specific behavior.
+    #
+    # Overrides the base inference methods to incorporate database column
+    # metadata (nullability, defaults, limits, decimal scale) and model-level
+    # features (defined enums, STI inheritance).
+    #
+    # Unlike the Active Model inference, which relies solely on validation
+    # declarations, this module reads the actual column schema to produce
+    # more precise constraints.
+    module Inference::ActiveRecord
       def foreign_keys = reflect_on_all_associations(:belongs_to)
           .map(&:foreign_key)
 
