@@ -61,8 +61,11 @@ module ActionAI
     end
 
     initializer "action_ai.set_autoload_paths", before: :set_autoload_paths do |app|
+      app.config.paths.add "app/ai/agents",    autoload: true, eager_load: true
+      app.config.paths.add "test/ai/previews", autoload: true
+
       options = app.config.action_ai
-      app.config.paths["test/ai/prompts/previews"].concat(options.preview_paths)
+      app.config.paths["test/ai/previews"].concat(options.preview_paths)
     end
 
     config.after_initialize do |app|
