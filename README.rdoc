@@ -152,6 +152,10 @@ Supported type mappings:
 
 Other types are not included in the schema.
 
+Active Record associations are included as nested schemas via +object+/+array+.
+To prevent unnescessary nesting or circular dependencies, the schema will include
+associations registered for _nested attributes_ (via +accepts_nested_attributes_for+) only.
+
 === +returns+ in agent actions
 
 Call +returns ModelClass+ inside an action method to declare the expected

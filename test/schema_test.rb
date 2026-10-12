@@ -49,14 +49,30 @@ class SchemaTest < ActiveSupport::TestCase
     validates :height, numericality: { greater_than: 0.2, less_than: 2.8 }
   end
 
+  class ShopRecord < ActiveRecord::Base
+    self.table_name = "shops"
+
+    has_and_belongs_to_many :clients, class_name: "ClientRecord"
+
+    accepts_nested_attributes_for :clients
+  end
+
   class ClientRecord < PersonRecord
+    has_and_belongs_to_many :shops
   end
 
   # A record with a has_many association and counter cache
   class PostRecord < ActiveRecord::Base
     self.table_name = "posts"
 
-    has_many :comments, class_name: "CommentRecord", counter_cache: true
+    belongs_to :author,      class_name: "PersonRecord"
+    belongs_to :editor,      class_name: "PersonRecord", optional: true
+    has_many   :comments,    class_name: "CommentRecord", counter_cache: true
+    has_one    :top_comment, class_name: "CommentRecord"
+
+    accepts_nested_attributes_for :author, :editor
+    accepts_nested_attributes_for :comments, limit: 1
+    accepts_nested_attributes_for :top_comment
   end
 
   # A record with foreign keys, counter cache, cached columns, and lock version
@@ -64,7 +80,9 @@ class SchemaTest < ActiveSupport::TestCase
     self.table_name = "comments"
 
     belongs_to :post,   class_name: "PostRecord"
-    belongs_to :author, class_name: "PersonRecord"
+    belongs_to :author, class_name: "PersonRecord", default: -> { post.author }
+
+    accepts_nested_attributes_for :author
   end
 
   class Response
@@ -137,6 +155,15 @@ class SchemaTest < ActiveSupport::TestCase
         table.timestamps
       end
 
+      create_table :shops do |table|
+        table.string :name, null: false
+      end
+
+      create_table :people_shops, id: false do |table|
+        table.integer :person_id, null: false
+        table.integer :shop_id,   null: false
+      end
+
       create_table :posts do |table|
         table.string  :title
         table.string  :body
@@ -147,6 +174,7 @@ class SchemaTest < ActiveSupport::TestCase
       create_table :comments do |table|
         table.integer :post_id
         table.integer :author_id
+        table.integer :editor_id
 
         table.string  :body
         table.integer :lock_version, default: 0
@@ -382,6 +410,63 @@ class SchemaTest < ActiveSupport::TestCase
     assert_not_includes required, "role"
     assert_not_includes required, "email"
     assert_not_includes required, "height"
+  end
+
+  # --- Nested schemas: Associations ---
+
+  test "ActiveRecord .schema omits associations not registered for nested attributes" do
+    assert_not_includes schema_properties(CommentRecord), "post"
+  end
+
+  test "ActiveRecord .schema includes belongs_to associations as nested objects" do
+    assert_includes schema_properties(PostRecord), "author"
+    assert_includes schema_properties(PostRecord), "editor"
+
+    author = schema_property PostRecord, :author
+    editor = schema_property PostRecord, :editor
+
+    assert_equal "object", author[:type]
+    assert_equal "Author", author[:description]
+
+    assert_equal "object", editor[:type]
+    assert_equal "Editor", editor[:description]
+  end
+
+  test "ActiveRecord .schema includes has_one associations as nested objects" do
+    assert_includes schema_properties(PostRecord), "top_comment"
+
+    top_comment = schema_property PostRecord, :top_comment
+
+    assert_equal "object",      top_comment[:type]
+    assert_equal "Top comment", top_comment[:description]
+  end
+
+  test "ActiveRecord .schema includes has_many associations as nested arrays" do
+    assert_includes schema_properties(PostRecord), "comments"
+
+    comments = schema_property PostRecord, :comments
+
+    assert_equal "array",    comments[:type]
+    assert_equal "Comments", comments[:description]
+    assert_equal 1,          comments[:maxItems]
+  end
+
+  test "ActiveRecord .schema includes has_and_belongs_to_many associations as nested arrays" do
+    assert_includes schema_properties(ShopRecord), "clients"
+
+    clients = schema_property ShopRecord, :clients
+
+    assert_equal "array",   clients[:type]
+    assert_equal "Clients", clients[:description]
+  end
+
+  test "ActiveRecord .schema marks required associations" do
+    required = PostRecord.to_json_schema[:required]
+
+    assert_includes     required, "author"
+    assert_not_includes required, "editor"
+    assert_not_includes required, "comments"
+    assert_not_includes required, "top_comment"
   end
 
   # --- #returns ---

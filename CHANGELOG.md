@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `.schema` class method on any `ActiveModel::API` model, returning a cached `Schematist::Schema` instance derived from the model’s attribute types and constraints.
+  - Include Active Record associations as nested schemas via objects/arrays.
+    Consider associations registered for _nested attributes_ only.
   - Prefer custom schemas over inferred ones.
     Define them as `<ModelName>Schema < ActionAI::Schema` classes under `app/schemas`.
 - `#returns(ModelClass)` instance method in agent actions: configures structured output via `chat.with_schema` and decorates the resulting `RubyLLM::Message` with `#object` returning a model instance.

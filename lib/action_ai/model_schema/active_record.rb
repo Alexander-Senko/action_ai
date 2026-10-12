@@ -12,6 +12,8 @@ module ActionAI
     # declarations, this module reads the actual column schema to produce
     # more precise constraints.
     module Inference::ActiveRecord
+      include Memery
+
       def foreign_keys = reflect_on_all_associations(:belongs_to)
           .map(&:foreign_key)
 
@@ -33,6 +35,21 @@ module ActionAI
               locking_column,
               *cache_columns,
           ].map(&:to_sym))
+          .merge(schema_reflections)
+
+      memoize def schema_reflections = nested_attributes_options
+          .filter_map { |name, options|
+            reflection = reflect_on_association name
+
+            [ name, {
+              type:        reflection.collection? ? :array : :object,
+              of:          reflection.klass.schema,
+              description: try(:human_attribute_name, name),
+              required:    reflection_required?(name),
+              max_items:   options[:limit],
+            }.compact ]
+          }
+          .to_h
 
       # Determines whether an attribute is required by checking the column’s
       # null constraint, in addition to any Active Model checks.
@@ -101,6 +118,19 @@ module ActionAI
 
           *(yield if block_given?)
         ] }
+      end
+
+      def reflection_required? name
+        reflect_on_association(name)&.then do
+          case it
+          when ActiveRecord::Reflection::BelongsToReflection
+            not it.options[:optional]
+          when ActiveRecord::Reflection::HasOneReflection
+            it.options[:required] || false
+          else
+            false
+          end
+        end
       end
     end
   end
