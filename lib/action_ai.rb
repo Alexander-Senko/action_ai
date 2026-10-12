@@ -53,6 +53,7 @@ module ActionAI
   autoload :TestHelper
   autoload :Interaction
   autoload :ImplicitInteraction
+  autoload :StructuredOutput
   autoload :ExecutionJob
   autoload :QueuedExecution
 
