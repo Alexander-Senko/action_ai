@@ -22,7 +22,7 @@ automatically at the end of the action unless you have already called it.
 This can be as simple as:
 
   class Generator < ApplicationAI
-    default model: "gpt-4o"
+    model "gpt-6.1-sol"
 
     def code(task, language)
       @task     = task
@@ -88,34 +88,60 @@ You can also chain multiple agent actions to compose a small workflow before rea
   WorkflowAgent.collect("release notes").refine(style: "bullet list").content
   # => collected release notes refined as bullet list
 
-== Setting defaults
-
-It is possible to set default values that will be used in every method in your
-Action AI Agent class. To implement this functionality, you just call the public
-class method +default+ which you get for free from ActionAI::Agent.
-This method accepts a Hash as the parameter. You can use any options
-supported by +RubyLLM::Chat+, such as +:provider+ and +:model+.
-Finally, it is also possible to pass in a
-Proc that will get evaluated when it is needed.
-
-Note that every value you set with this method will get overwritten if you use the
-same key in your agent method.
-
-Example:
-
-  class Generator < ApplicationAI
-    default model: proc { Current.user.preferred_model }
-  end
-
 == Configuration
 
-The Agent class has the full list of configuration options. Here's an example:
+Your agent class uses the full +RubyLLM::Agent+ configuration DSL
+directly. You never need to define or reference a +RubyLLM::Agent+
+subclass yourself; just call +model+, +instructions+, +tools+, +schema+, and
+the other +RubyLLM::Agent+ class macros right on your Action AI agent:
 
-  ActionAI::Agent.default_options = {
-    provider: :openai,
-    model: "gpt-4o-mini"
-  }
+  class Generator < ApplicationAI
+    model "gpt-6.1-sol"
+    instructions "You are a concise support assistant."
+    tools SearchDocs, LookupAccount
 
+    def code(task, language)
+      @task     = task
+      @language = language
+    end
+  end
+
+If you declare +inputs+, use ActionAI::Parameterized to supply them at call
+time; the parameters given to +with+ are forwarded as the agent's runtime
+inputs:
+
+  class Generator < ApplicationAI
+    inputs :workspace
+
+    instructions { "You are helping #{workspace.name}" }
+  end
+
+  Generator.with(workspace:).code("Parse CSV", :ruby)
+
+Subclasses inherit their parent's RubyLLM agent configuration and can extend
+or override it, the same way +RubyLLM::Agent+ subclasses do:
+
+  class ApplicationAI < ActionAI::Agent
+    model "gpt-6-luna", provider: :openai
+  end
+
+  class Generator < ApplicationAI
+    model { Current.user.preferred_model }
+  end
+
+The Agent class has a few settings unrelated to the RubyLLM agent DSL that are specified on the class level.
+Here's an example:
+
+  ActionAI::Agent.execute_later_queue_name = :ai_agents
+
+* +logger+ — the logger is used for generating information on prompt execution if available.
+  Can be set to +nil+ for no logging. Compatible with both Ruby's own +Logger+ and Log4r loggers.
+
+* +execution_job+ — The job class used with +later+. Agents can set this to use a
+  custom execution job. Defaults to +ActionAI::ExecutionJob+.
+
+* +execute_later_queue_name+ — The queue name used by +later+ with the default
+  +execution_job+. Agents can set this to use a custom queue name.
 
 == Structured output (data schemas)
 

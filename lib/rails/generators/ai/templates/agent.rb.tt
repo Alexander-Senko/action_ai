@@ -1,5 +1,9 @@
 <% module_namespacing do -%>
 class <%= class_name %> < ApplicationAI
+  # Uncomment to configure model/instructions/tools using the RubyLLM agent DSL:
+  # model "gpt-6.1-sol"
+  # instructions "You are a helpful assistant."
+
 <% actions.each_with_index do |action, index| -%>
 <% if index != 0 -%>
 

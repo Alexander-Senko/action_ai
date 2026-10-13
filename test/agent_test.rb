@@ -6,7 +6,6 @@ require "action_dispatch"
 require "active_support/time"
 
 require "agents/base_agent"
-require "agents/proc_agent"
 require "agents/asset_agent"
 
 class AgentTest < ActiveSupport::TestCase
@@ -121,13 +120,6 @@ class AgentTest < ActiveSupport::TestCase
     assert_equal("Welcome", response.content.strip)
   end
 
-  test "proc default values are not evaluated when overridden" do
-    with_default BaseAgent, model: -> { flunk } do
-      response = ProcAgent.welcome
-      assert_equal "echo", response.model
-    end
-  end
-
   test "modifying the prompt with a before_action" do
     class BeforeActionAgent < ActionAI::Agent
       before_action :add_special_header!
@@ -194,14 +186,6 @@ class AgentTest < ActiveSupport::TestCase
   end
 
   private
-    def with_default(klass, new_values)
-      old = klass.default_params
-      klass.default(new_values)
-      yield
-    ensure
-      klass.default_params = old
-    end
-
     def with_translation(locale, data)
       I18n.backend.store_translations(locale, data)
       yield

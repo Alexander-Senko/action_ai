@@ -4,6 +4,9 @@ require "ruby_llm"
 require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/hash/except"
 require "active_support/core_ext/module/anonymous"
+require "active_support/core_ext/module/delegation"
+require "active_support/core_ext/object/try"
+require "active_support/core_ext/object/with_options"
 require "memery"
 
 require "action_ai/log_subscriber"
@@ -26,12 +29,11 @@ module ActionAI
   # the prompt views, options on the AI model used such as the <tt>:model</tt> ID, and attachments.
   #
   #   class ApplicationAI < ActionAI::Agent
-  #     default model: 'gpt-4o-mini',
-  #             provider: :openai
+  #     model "gpt-6-luna", provider: :openai
   #   end
   #
   #   class Generator < ApplicationAI
-  #     default model: 'gpt-4o'
+  #     model "gpt-6.1-sol"
   #
   #     def code(task, language)
   #       @task     = task
@@ -155,33 +157,40 @@ module ActionAI
   #       end
   #     end
   #
-  # == Default \Hash
+  # == Configuration
   #
-  # Action AI provides some intelligent defaults for your AI interactions, these are usually specified in a
-  # default method inside the class definition:
-  #
-  #   class Generator < ApplicationAI
-  #     default model: 'gpt-4o'
-  #   end
-  #
-  # You can pass in any config value that a +RubyLLM::Chat+ accepts.
-  #
-  # Finally, Action AI also supports passing <tt>Proc</tt> and <tt>Lambda</tt> objects into the default hash,
-  # so you can define methods that evaluate as the message is being generated:
+  # Action AI agents configure their model, instructions, tools, and other
+  # chat options using the +RubyLLM::Agent+ class DSL directly. You never
+  # need to define or reference a +RubyLLM::Agent+ subclass yourself; just
+  # call +model+, +instructions+, +tools+, +schema+, and the other
+  # +RubyLLM::Agent+ class macros right on your +ActionAI::Agent+ subclass:
   #
   #   class Generator < ApplicationAI
-  #     default model: -> { Current.user.preferred_model },
-  #             api_key: proc { Current.user.ai_api_key }
+  #     model "gpt-6.1-sol"
+  #     instructions "You are a concise support assistant."
+  #     tools SearchDocs, LookupAccount
   #   end
   #
-  # Note that the proc/lambda is evaluated right at the start of the prompt generation, so if you
-  # set something in the default hash using a proc, and then set the same thing inside of your
-  # agent method, it will get overwritten by the agent method.
+  # Under the hood, Action AI manages a private +RubyLLM::Agent+ subclass for you
+  # and builds +chat+ from it, so instructions, tools, schema, fallbacks, caching,
+  # and every other declaration are honored exactly as documented on
+  # <tt>RubyLLM::Agent</tt>. Any params set through ActionAI::Parameterized
+  # (<tt>Generator.with(...)</tt>) are forwarded as its runtime +inputs+.
   #
-  # It is also possible to set these default options that will be used in all agents through
-  # the <tt>default_options=</tt> configuration in <tt>config/application.rb</tt>:
+  # Configuration is inherited the same way +RubyLLM::Agent+ subclasses inherit
+  # it, so a shared +ApplicationAI+ base class can declare a default +model+ and
+  # +instructions+ that every agent subclass then extends or overrides:
   #
-  #    config.action_ai.default_options = { provider: :openai, model: "gpt-4o-mini" }
+  #   class ApplicationAI < ActionAI::Agent
+  #     model "gpt-6-luna", provider: :openai
+  #   end
+  #
+  #   class Generator < ApplicationAI
+  #     model { Current.user.preferred_model }
+  #   end
+  #
+  # ::rescue_from continues to handle agent-action level exceptions; use it as
+  # usual, there's no separate chat-level rescue mechanism to reach for.
   #
   # == \Callbacks
   #
@@ -265,9 +274,6 @@ module ActionAI
   # These options are specified on the class level, like
   # <tt>ActionAI::Agent.raise_execution_errors = true</tt>
   #
-  # * <tt>default_options</tt> - You can pass this in at a class level as well as within the class itself as
-  #   per the above section.
-  #
   # * <tt>logger</tt> - the logger is used for generating information on prompt execution if available.
   #   Can be set to +nil+ for no logging. Compatible with both Ruby's own +Logger+ and Log4r loggers.
   #
@@ -304,11 +310,9 @@ module ActionAI
 
     helper ActionAI::PromptHelper
 
-    class_attribute :default_params, default: {
-      # none
-    }.freeze
-
     class << self
+      include Memery
+
       # Returns the name of the current agent. This method is also being used as a path for a view lookup.
       # If this is an anonymous agent, this method will return +anonymous+ instead.
       def agent_name
@@ -318,18 +322,18 @@ module ActionAI
       attr_writer :agent_name
       alias :controller_path :agent_name
 
-      # Allows to set defaults through app configuration:
-      #
-      #    config.action_ai.default_options = { provider: :openai }
-      def default(value = nil)
-        self.default_params = default_params.merge(value).freeze if value
-        default_params
+      # The private, per-agent-class +RubyLLM::Agent+ subclass,
+      # lazily created and configured via its own class macros
+      # (+model+, +instructions+, +tools+, +schema+, and so on).
+      memoize def agent_class
+        Class.new superclass.try(:agent_class) || RubyLLM::Agent
       end
-      alias :default_options= :default
 
     private
       def method_missing(method_name, ...)
-        if action_methods.include?(method_name.name)
+        if agent_class.respond_to? method_name # configuration
+          agent_class.public_send(method_name, ...)
+        elsif action_methods.include? method_name.name # actions
           Interaction.new(self, method_name, ...)
         else
           super
@@ -337,13 +341,22 @@ module ActionAI
       end
 
       def respond_to_missing?(method, include_all = false)
-        action_methods.include?(method.name) || super
+        agent_class.respond_to? method or
+            action_methods.include? method.name or
+                super
       end
     end
 
     attr_internal :message
 
-    memoize def chat = RubyLLM.chat(**apply_defaults)
+    memoize def agent = agent_class.new(**params
+      .slice(*agent_class.inputs)
+    )
+
+    with_options private: true do
+      delegate :agent_class, to: :class
+      delegate :chat,        to: :agent
+    end
 
     def process(method_name, *args) # :nodoc:
       payload = {
@@ -379,10 +392,10 @@ module ActionAI
     #
     # * +:with+ - Array of file paths or URLs to attach to the prompt.
     #
-    # You can set default model options using the ::default class method:
+    # You can set default model options using the ::model class method:
     #
     #  class Generator < ActionAI::Agent
-    #    default model: 'gpt-4o', provider: :openai
+    #    model "gpt-6.1-sol", provider: :openai
     #  end
     #
     # It will find a template in the view paths using by default the agent name and the
@@ -392,7 +405,7 @@ module ActionAI
     # For example:
     #
     #   class Generator < ActionAI::Agent
-    #     default model: 'gpt-4o'
+    #     model "gpt-6.1-sol"
     #
     #     def code(task, language)
     #       @task     = task
@@ -421,24 +434,6 @@ module ActionAI
       # Prompts do not support relative path links.
       def self.supports_path? # :doc:
         false
-      end
-
-      def apply_defaults(config = {})
-        default_values = self.class.default.except(*config.keys).transform_values do |value|
-          compute_default(value)
-        end
-
-        config.reverse_merge(default_values)
-      end
-
-      def compute_default(value)
-        return value unless value.is_a?(Proc)
-
-        if value.arity == 1
-          instance_exec(self, &value)
-        else
-          instance_exec(&value)
-        end
       end
 
       def use_attachments
