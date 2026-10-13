@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 
-## [0.3.0] - UNRELEASED
+## [0.3.0] - 2026-10-13
 
 ### Changed
 
@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 - Dropped `echo` test model in favor of `echo` protocol.
 
 ### Added
+
+#### Structured output
 
 - `.schema` class method on any `ActiveModel::API` model, returning a cached `Schematist::Schema` instance derived from the model’s attribute types and constraints.
   - Include Active Record associations as nested schemas via objects/arrays.
