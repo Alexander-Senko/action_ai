@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.4.0] - UNRELEASED
+
+### Changed
+
+- Moved agent-level configuration to RubyLLM agents.
+
+### Added
+
+#### Configuration
+
+- RubyLLM agent configuration DSL support on `ActionAI::Agent`: class methods `model`, `instructions`, `tools`, `tool_options`, `server_tools`, `thinking`, `citations`, `caching`, `compaction`, `provider_options`, `headers`, `schema`, `fallbacks`, `context`, `chat_model`, `inputs`, `temperature`, `max_output_tokens`, and `end_user` configure a private, internally managed `RubyLLM::Agent` subclass.
+  `chat` is built via that agent’s `.chat` instead of plain `RubyLLM.chat`.
+- Parameters set through `ActionAI::Parameterized` are forwarded as the agent’s runtime `inputs`.
+
+### Removed
+
+#### Configuration
+
+- `default`/`default_options=` class method and `default_params` class attribute.
+  Use the RubyLLM agent DSL (`model`, `instructions`, and so on) instead.
+
+
 ## [0.3.0] - 2026-10-13
 
 ### Changed
