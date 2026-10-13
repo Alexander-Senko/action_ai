@@ -163,12 +163,16 @@ return type. Action AI will:
 
 1. Configure the chat to request output matching the model's JSON schema
    (+chat.with_schema ModelClass.schema+).
-2. Decorate the resulting +RubyLLM::Message+ with +#object+ (a model instance).
+2. Decorate the resulting +RubyLLM::Message+ with Strong Parameters.
+3. Construct a model instance accessible via +#object+.
 
   class Extractor < ApplicationAI
     def person(text)
       @text = text
-      returns Person
+
+      returns Person do |params|
+        params.permit(:name, :age)
+      end
     end
   end
 
@@ -182,7 +186,10 @@ Pass the class wrapped in an array to declare an array return type:
   class Extractor < ApplicationAI
     def people(text)
       @text = text
-      returns [Person]
+
+      returns [Person] do |params|
+        params.permit(:name, :age)
+      end
     end
   end
 

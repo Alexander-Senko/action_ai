@@ -113,22 +113,34 @@ class SchemaTest < ActiveSupport::TestCase
   # An agent that uses +returns+ to get structured output
   class PersonAgent < ActionAI::Agent
     def extract_model(json_text)
-      returns PersonModel
+      returns PersonModel do |params|
+        params.permit(:name, :age)
+      end
+
       ask json_text
     end
 
     def extract_record(json_text)
-      returns PersonRecord
+      returns PersonRecord do |params|
+        params.permit(:name, :age)
+      end
+
       ask json_text
     end
 
     def extract_model_array(json_text)
-      returns [PersonModel]
+      returns [PersonModel] do |params|
+        params.permit(:name, :age)
+      end
+
       ask json_text
     end
 
     def extract_record_array(json_text)
-      returns [PersonRecord]
+      returns [PersonRecord] do |params|
+        params.permit(:name, :age)
+      end
+
       ask json_text
     end
   end
@@ -486,12 +498,17 @@ class SchemaTest < ActiveSupport::TestCase
   end
 
   test "#object has the correct attributes" do
-    model  = PersonAgent.extract_model  '{"name":"Alice","age":30,"score":9.5,"active":true}'
-    record = PersonAgent.extract_record '{"name":"Alice","age":30,"score":9.5,"active":true}'
-    assert_equal "Alice", model .object.name
+    model  = PersonAgent.extract_model  '{"name":"Alice","age":30,"score":9.5,"active":false}'
+    record = PersonAgent.extract_record '{"name":"Alice","age":30,"score":9.5,"active":false}'
+
+    assert_equal "Alice",  model.object.name
     assert_equal "Alice", record.object.name
-    assert_equal 30,      model .object.age
+    assert_equal 30,       model.object.age
     assert_equal 30,      record.object.age
+    assert_equal true,     model.object.active
+    assert_equal true,    record.object.active
+    assert_nil             model.object.score
+    assert_nil            record.object.score
   end
 
   test "#returns accepts an array to declare an array return type" do
@@ -511,14 +528,27 @@ class SchemaTest < ActiveSupport::TestCase
   end
 
   test "#object array has the correct attributes" do
-    model  = PersonAgent.extract_model_array  '[{"name":"Alice","age":30},{"name":"Bob","age":25}]'
-    record = PersonAgent.extract_record_array '[{"name":"Alice","age":30},{"name":"Bob","age":25}]'
-    assert_equal 2,       model .object.size
+    model  = PersonAgent.extract_model_array  '[{"name":"Alice","age":30,"score":9.5},{"name":"Bob","age":25,"active":false}]'
+    record = PersonAgent.extract_record_array '[{"name":"Alice","age":30,"score":9.5},{"name":"Bob","age":25,"active":false}]'
+
+    assert_equal 2,        model.object.size
     assert_equal 2,       record.object.size
-    assert_equal "Alice", model .object.first.name
+    assert_equal "Alice",  model.object.first.name
     assert_equal "Alice", record.object.first.name
-    assert_equal "Bob",   model .object.last.name
+    assert_equal 30,       model.object.first.age
+    assert_equal 30,      record.object.first.age
+    assert_equal true,     model.object.first.active
+    assert_equal true,    record.object.first.active
+    assert_nil             model.object.first.score
+    assert_nil            record.object.first.score
+    assert_equal "Bob",    model.object.last.name
     assert_equal "Bob",   record.object.last.name
+    assert_equal 25,       model.object.last.age
+    assert_equal 25,      record.object.last.age
+    assert_equal true,     model.object.last.active
+    assert_equal true,    record.object.last.active
+    assert_nil             model.object.last.score
+    assert_nil            record.object.last.score
   end
 
   private

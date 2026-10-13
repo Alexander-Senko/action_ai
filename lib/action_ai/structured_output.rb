@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "action_controller/metal/strong_parameters"
+
 module ActionAI
   module StructuredOutput
     def ask(*, as: @model_class, **, &)
@@ -9,9 +11,9 @@ module ActionAI
         object = message.parsed&.then do |params|
           case model_class
           when Array
-            params.map { model_class.sole.new it }
+            params.map { model_class.sole.new process_response_params(it) }
           else
-            model_class.new params
+            model_class.new process_response_params(params)
           end
         end
 
@@ -29,7 +31,9 @@ module ActionAI
     #   class Extractor < ApplicationAI
     #     def person(text)
     #       @text = text
-    #       returns Person
+    #       returns Person do |params|
+    #         params.permit(:name, :age)
+    #       end
     #     end
     #   end
     #
@@ -45,7 +49,9 @@ module ActionAI
     #   class Extractor < ApplicationAI
     #     def people(text)
     #       @text = text
-    #       returns [Person]
+    #       returns [Person] do |params|
+    #         params.permit(:name, :age)
+    #       end
     #     end
     #   end
     #
@@ -58,13 +64,22 @@ module ActionAI
     #
     # The +model_class+ must respond to +.schema+, which is automatically
     # available on any model that includes +ActiveModel::Attributes+.
-    def returns model_class
+    def returns model_class, &process_response_params
       chat.with_schema case @model_class = model_class
       when Array
         { type: "array", items: model_class.sole.to_json_schema }
       else
         model_class.schema
       end
+
+      @process_response_params = process_response_params
+    end
+
+    private
+
+    def process_response_params params
+      ActionController::Parameters.new(params)
+          .then(&(@process_response_params || :itself))
     end
   end
 end

@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
   - Prefer custom schemas over inferred ones.
     Define them as `<ModelName>Schema < ActionAI::Schema` classes under `app/schemas`.
 - `#returns(ModelClass)` instance method in agent actions: configures structured output via `chat.with_schema` and decorates the resulting `RubyLLM::Message` with `#object` returning a model instance.
+  - Use Strong Parameters to decorate returned JSON for security reasons.
+    AI model’s output shouldn’t be considered a trusted input.
 - `#returns([ModelClass])` array syntax: configures an array schema and `#object` returns an array of model instances.
 
 
