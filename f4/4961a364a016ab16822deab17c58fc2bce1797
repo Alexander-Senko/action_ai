@@ -1,0 +1,39 @@
+CHANGELOG.md
+  h_3633b6af39cc3f 14-15,19
+  s_d79783e09fd7c8::t_20766c9b8d3e5e 22-23
+  s_d79783e09fd7c8::t_3799faddc75f0e 24-26
+  h_3633b6af39cc3f 6-13,16-18,20-21,27
+README.rdoc
+  h_3633b6af39cc3f 25,91-111,113-117,119,121-126,129,132-135,137-138,140-141,143-144
+lib/action_ai/agent.rb
+  h_3633b6af39cc3f 7-9,32,36,160,162-166,169-171,174-178,180-182,184-185,188-190,192-193,314-315,325-329,334-336,344-346,352-359,395,398,408
+lib/action_ai/version.rb
+  h_3633b6af39cc3f 4
+lib/rails/generators/ai/templates/agent.rb.tt
+  h_3633b6af39cc3f 3-6
+test/agents/configured_agent.rb
+  h_3633b6af39cc3f 3-6,10-15,17-19,22-24
+test/configuration_test.rb
+  h_3633b6af39cc3f 1-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f44961a364a016ab16822deab17c58fc2bce1797",
+  "prompts": {},
+  "humans": {
+    "h_3633b6af39cc3f": {
+      "author": "Alexander Senko <Alexander.Senko@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_d79783e09fd7c8": {
+      "agent_id": {
+        "tool": "github-copilot-jetbrains",
+        "id": "1792248793658",
+        "model": "unknown"
+      },
+      "human_author": "Alexander Senko <Alexander.Senko@gmail.com>"
+    }
+  }
+}
