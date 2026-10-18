@@ -17,6 +17,11 @@ All notable changes to this project will be documented in this file.
   `chat` is built via that agent’s `.chat` instead of plain `RubyLLM.chat`.
 - Parameters set through `ActionAI::Parameterized` are forwarded as the agent’s runtime `inputs`.
 
+#### Schemas
+
+- Consider Active Record _stored attributes_ for schema inference.
+  The type is `string` because `ActiveRecord::Store` doesn’t provide type casting. The same is true for the attributes a model will get from a user-filled form, so the behavior is consistent. One should override attribute setters for type casting if needed.
+
 ### Removed
 
 #### Configuration

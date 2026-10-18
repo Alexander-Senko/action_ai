@@ -40,6 +40,12 @@ class SchemaTest < ActiveSupport::TestCase
   class PersonRecord < ActiveRecord::Base
     self.table_name = "people"
 
+    store_accessor :settings, %i[
+      theme
+      locale
+      motto
+    ]
+
     validates :name,   length: { minimum: 2 }
     validates :active, acceptance: true
     validates :role,   inclusion: { in: %w[admin user] }
@@ -47,6 +53,9 @@ class SchemaTest < ActiveSupport::TestCase
     validates :age,    numericality: { greater_than: 0, less_than: 130 }
     validates :score,  numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 10, multiple_of: 0.1 }
     validates :height, numericality: { greater_than: 0.2, less_than: 2.8 }
+    validates :theme,  inclusion: { in: %w[dark light auto] }
+    validates :locale, inclusion: { in: I18n.available_locales }, presence: true
+    validates :motto,  length: { maximum: 140 }
   end
 
   class ShopRecord < ActiveRecord::Base
@@ -163,6 +172,7 @@ class SchemaTest < ActiveSupport::TestCase
         table.datetime :seen_at
         table.time     :start_at
         table.binary   :cert
+        table.json     :settings
 
         table.timestamps
       end
@@ -284,6 +294,31 @@ class SchemaTest < ActiveSupport::TestCase
 
   test "ActiveRecord .schema includes binary attributes" do
     assert_equal ["string", "base64"], schema_property(PersonRecord, :cert).values_at(:type, :contentEncoding)
+  end
+
+  test "ActiveRecord .schema includes stored attributes" do
+    properties = schema_properties PersonRecord
+    required   = PersonRecord.to_json_schema[:required]
+
+    assert_includes properties, "theme"
+    assert_includes properties, "locale"
+    assert_includes properties, "motto"
+
+    theme  = schema_property PersonRecord, :theme
+    locale = schema_property PersonRecord, :locale
+    motto  = schema_property PersonRecord, :motto
+
+    assert_not_includes required, "theme"
+    assert_includes     required, "locale"
+    assert_not_includes required, "motto"
+
+    assert_equal "string",  theme[:type]
+    assert_equal "string", locale[:type]
+    assert_equal "string",  motto[:type]
+
+    assert_equal %w[dark light auto], theme[:enum]
+    assert_equal I18n.locale.to_s,   locale[:const]
+    assert_equal 140,                 motto[:maxLength]
   end
 
   test ".schema omits attributes with unsupported types" do

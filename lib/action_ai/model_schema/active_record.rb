@@ -35,6 +35,20 @@ module ActionAI
               locking_column,
               *cache_columns,
           ].map(&:to_sym))
+          .merge(stored_attributes.values.reduce(:|).to_h do |name|
+            [ name, {
+              type:             :string,
+              description:      try(:human_attribute_name, name),
+              required:         attribute_required?(name),
+              default:          attribute_default(name),
+              enum:             attribute_enum(name),
+              const:            attribute_const(name),
+              pattern:          attribute_format(name),
+
+              **attribute_length(name),
+              **attribute_boundaries(name),
+            }.compact ]
+          end)
           .merge(schema_reflections)
 
       memoize def schema_reflections = nested_attributes_options
