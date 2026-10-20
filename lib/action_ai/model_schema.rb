@@ -144,7 +144,7 @@ module ActionAI
       ].compact.presence
           &.map(&:to_a)
           &.inject(&:&)
-          &.then&.select(&:many?)&.first
+          &.then&.detect(&:many?)
 
       def attribute_const(name) = [
         *(yield if block_given?)
