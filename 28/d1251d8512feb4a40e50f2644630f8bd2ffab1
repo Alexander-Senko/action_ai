@@ -1,0 +1,18 @@
+CHANGELOG.md
+  h_3633b6af39cc3f 6
+lib/action_ai/version.rb
+  h_3633b6af39cc3f 4
+lib/action_ai/model_schema.rb
+  h_3633b6af39cc3f 147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "28d1251d8512feb4a40e50f2644630f8bd2ffab1",
+  "prompts": {},
+  "humans": {
+    "h_3633b6af39cc3f": {
+      "author": "Alexander Senko <Alexander.Senko@gmail.com>"
+    }
+  }
+}
